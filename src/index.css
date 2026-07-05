@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+@theme {
+  /* Units Theme Palette */
+  --color-background: #f4e9e1; /* Sand Beige body */
+  --color-foreground: #000000;
+  
+  --color-card: #ffffff;
+  --color-card-foreground: #000000;
+  
+  --color-primary: #000000;
+  --color-primary-foreground: #ffffff;
+  
+  --color-secondary: #f4e9e1;
+  --color-secondary-foreground: #000000;
+  
+  /* Accents (Units.gr duo) */
+  --color-accent-blue: #0072e3;
+  --color-accent-yellow: #ffb200;
+  
+  /* Radius */
+  --radius-sm: 20px;
+  --radius-md: 32px;
+  --radius-lg: 48px;
+  --radius-pill: 999px;
+  
+  /* Shadows */
+  --shadow-soft: 0 4px 20px rgba(0,0,0,.08);
+  --shadow-lift: 0 20px 60px -15px rgba(0,0,0,.15);
+  
+  /* Fonts */
+  --font-display: 'Clash Display', sans-serif;
+  --font-body: 'Satoshi', sans-serif;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: rgba(0,0,0,0.05);
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+}
+
+/* Units.gr Styles */
+@layer utilities {
+  .bento-card {
+    @apply bg-card relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)];
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .bento-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lift);
+  }
+  
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .pill-btn {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-black text-white font-bold transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/20;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .pill-btn:hover {
+    @apply bg-[var(--color-accent-blue)] text-white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .pill-btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-transparent text-black font-bold transition-all duration-300 border border-black/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/20;
+    border-radius: var(--radius-pill);
+  }
+  
+  .pill-btn-secondary:hover {
+    @apply bg-black/5;
+  }
+  
+  .pill-badge {
+    @apply px-3 py-1 text-[11px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5 bg-black/5 text-black;
+    border-radius: var(--radius-pill);
+  }
+
+  .bento-button {
+    @apply inline-flex items-center justify-center px-6 py-3 font-bold transition-all duration-300 border border-black/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/20 disabled:opacity-50;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .bento-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .container-wide {
+    @apply mx-auto w-full;
+    max-width: 2000px;
+    padding-inline: 40px;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Fluid typography */
+  .text-fluid-hero {
+    font-size: clamp(64px, 9.375vw, 142px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  
+  .text-fluid-h2 {
+    font-size: clamp(48px, 6vw, 96px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  
+  .text-fluid-h3 {
+    font-size: clamp(32px, 4vw, 64px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  .grid-brand-bg {
+    background-color: var(--color-background);
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.8) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  display: flex;
+  width: fit-content;
+  animation: marquee 20s linear infinite;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.4);
+}

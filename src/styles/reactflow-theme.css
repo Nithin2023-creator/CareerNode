@@ -1,0 +1,66 @@
+/* Custom React Flow theme overriding default variables and classes to match CareerNode */
+
+.react-flow__handle {
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border: 2px solid black;
+  transition: all 0.2s ease;
+}
+
+.react-flow__handle:hover {
+  background-color: var(--color-accent-blue);
+  transform: scale(1.2);
+}
+
+.react-flow__handle-connecting {
+  background-color: var(--color-accent-blue);
+}
+
+.react-flow__handle-valid {
+  background-color: var(--color-accent-blue);
+}
+
+.react-flow__edge-path {
+  stroke: rgba(0, 0, 0, 0.2);
+  stroke-width: 3;
+  transition: stroke 0.2s ease;
+}
+
+.react-flow__edge:hover .react-flow__edge-path,
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--color-accent-blue);
+}
+
+.react-flow__controls {
+  box-shadow: var(--shadow-soft) !important;
+  border-radius: 32px !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  background: white !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border-bottom: none !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s ease;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor !important;
+}

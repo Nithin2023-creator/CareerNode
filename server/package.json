@@ -1,0 +1,27 @@
+{
+  "name": "carrernode-server",
+  "version": "1.0.0",
+  "description": "CareerNode backend - cold mailer service",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "seed": "node seed/seedBundles.js"
+  },
+  "type": "commonjs",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.16.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "google-auth-library": "^10.9.0",
+    "http-errors": "^2.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.6.3",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.10",
+    "papaparse": "^5.5.3"
+  }
+}
