@@ -25,12 +25,12 @@ export default function JobFinderIntroModal({ isOpen, onClose }) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="w-full max-w-5xl relative pointer-events-auto"
+                className="w-full max-w-5xl relative pointer-events-auto pt-14 md:pt-0"
               >
                 {/* Close Button */}
                 <button
                   onClick={onClose}
-                  className="absolute -top-3 -right-3 md:-top-4 md:-right-4 h-10 w-10 md:h-12 md:w-12 bg-white rounded-full border border-black/10 shadow-lg flex items-center justify-center hover:bg-black hover:text-white transition-colors z-10"
+                  className="absolute top-2 right-2 md:top-4 md:right-4 h-10 w-10 md:h-12 md:w-12 bg-white rounded-full border border-black/10 shadow-lg flex items-center justify-center hover:bg-black hover:text-white transition-colors z-10"
                 >
                   <X className="h-5 w-5" />
                 </button>

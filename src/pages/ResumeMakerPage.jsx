@@ -68,7 +68,7 @@ export default function ResumeMakerPage() {
           <h3 className="font-display text-3xl font-bold uppercase z-10 mb-4">Ready to Tailor</h3>
           <p className="text-lg font-medium text-black/60 max-w-sm z-10">Your perfectly matched ATS-friendly resume will appear right here.</p>
           
-          <div className="absolute bottom-8 z-20 flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity translate-y-4 group-hover:translate-y-0 duration-300">
+          <div className="absolute bottom-8 z-20 flex gap-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity translate-y-0 lg:translate-y-4 lg:group-hover:translate-y-0 duration-300">
             <button className="pill-btn-secondary text-black">
                PREVIEW
             </button>

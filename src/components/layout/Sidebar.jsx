@@ -1,16 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
-import { features } from '../../config/features';
+import { navItems } from '../../config/navItems';
 
 export default function Sidebar() {
-  const navItems = [
-    { name: 'Dashboard', to: '/dashboard', tag: 'HUB' },
-    { name: 'Job Finder', to: '/dashboard/job-finder', tag: 'JOBS' },
-    { name: 'Cold Mailer', to: '/dashboard/emailer', tag: 'EMAIL' },
-    { name: 'Resume Maker', to: '/dashboard/resume-maker', tag: 'RESUME' },
-    { name: 'Automations', to: '/dashboard/automations', tag: features.automationsReleased ? 'FLOW' : 'SOON' },
-  ];
-
   return (
     <aside className="w-[260px] flex-shrink-0 flex flex-col h-full hidden lg:flex space-y-4">
       {/* Logo Title */}

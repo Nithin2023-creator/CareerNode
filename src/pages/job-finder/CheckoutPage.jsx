@@ -137,7 +137,7 @@ export default function CheckoutPage() {
 
           {/* Warnings & Decorative Fields */}
           {paymentMethod === 'credits' && !hasEnoughCredits && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-[16px] flex items-center justify-between border border-red-100">
+            <div className="bg-red-50 text-red-600 p-4 rounded-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-red-100">
               <div className="flex items-center gap-2 text-sm font-bold">
                 <AlertCircle className="h-5 w-5" /> Insufficient Credits
               </div>

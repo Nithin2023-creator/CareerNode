@@ -120,8 +120,8 @@ export default function QuickDraftPage() {
         className="lg:col-span-2"
       >
         <div className="bento-card p-6 md:p-8 h-full min-h-[400px] flex flex-col bg-white text-black">
-          <div className="flex justify-between items-center mb-6 border-b border-black/10 pb-6">
-            <h3 className="font-display text-4xl font-bold uppercase">Generated Draft</h3>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b border-black/10 pb-6">
+            <h3 className="font-display text-2xl sm:text-4xl font-bold uppercase">Generated Draft</h3>
             <button
               onClick={handleCopy}
               className="pill-btn-secondary px-4 py-2 flex items-center gap-2 text-sm text-black shadow-sm bg-white hover:bg-black/5"

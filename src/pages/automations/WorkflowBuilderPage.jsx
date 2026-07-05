@@ -70,6 +70,25 @@ export default function WorkflowBuilderPage() {
     [reactFlowInstance, setNodes]
   );
 
+  const handleAddNodeTap = useCallback((nodeDef) => {
+    if (!reactFlowWrapper.current || !reactFlowInstance) return;
+    
+    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: reactFlowBounds.width / 2,
+      y: reactFlowBounds.height / 2,
+    });
+
+    const newNode = {
+      id: `node_${Date.now()}`,
+      type: 'toolNode',
+      position,
+      data: { ...nodeDef },
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+  }, [reactFlowInstance, setNodes]);
+
   const onNodeClick = useCallback((event, node) => {
     setSelectedNodeId(node.id);
   }, []);
@@ -108,26 +127,26 @@ export default function WorkflowBuilderPage() {
   return (
     <div className="-m-6 md:-m-10 lg:-m-12 h-[calc(100vh-8rem)] flex flex-col bg-[var(--color-background)] overflow-hidden">
       {/* Top Bar */}
-      <div className="h-16 bg-white border-b border-black/10 flex items-center justify-between px-6 z-20 flex-shrink-0 shadow-sm">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard/automations" className="h-10 w-10 rounded-full border border-black/10 hover:bg-black hover:text-white flex items-center justify-center transition-colors">
+      <div className="min-h-16 py-3 bg-white border-b border-black/10 flex flex-wrap items-center justify-between px-4 md:px-6 z-20 flex-shrink-0 shadow-sm gap-4">
+        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-[200px]">
+          <Link to="/dashboard/automations" className="h-10 w-10 rounded-full border border-black/10 hover:bg-black hover:text-white flex items-center justify-center transition-colors flex-shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <input
             type="text"
             value={workflowName}
             onChange={(e) => setWorkflowName(e.target.value)}
-            className="font-display text-xl md:text-2xl font-bold uppercase tracking-tight bg-transparent border-none focus:outline-none focus:ring-0 w-64 md:w-96 text-black"
+            className="font-display text-lg sm:text-xl md:text-2xl font-bold uppercase tracking-tight bg-transparent border-none focus:outline-none focus:ring-0 w-full sm:w-64 md:w-96 text-black min-w-0"
             placeholder="Workflow Name"
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
           <div className="relative group">
             <button 
               disabled
-              className="pill-btn-secondary opacity-50 cursor-not-allowed flex items-center gap-2"
+              className="pill-btn-secondary opacity-50 cursor-not-allowed flex items-center gap-1 md:gap-2 text-xs md:text-sm px-3 md:px-5"
             >
-              <Play className="h-4 w-4" /> RUN
+              <Play className="h-3 w-3 md:h-4 md:w-4" /> RUN
             </button>
             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
               Coming Soon
@@ -135,16 +154,16 @@ export default function WorkflowBuilderPage() {
           </div>
           <button 
             onClick={handleSave}
-            className="pill-btn bg-black text-white hover:bg-[var(--color-accent-blue)] transition-colors flex items-center gap-2"
+            className="pill-btn bg-black text-white hover:bg-[var(--color-accent-blue)] transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm px-3 md:px-5"
           >
-            <Save className="h-4 w-4" /> SAVE
+            <Save className="h-3 w-3 md:h-4 md:w-4" /> SAVE
           </button>
         </div>
       </div>
 
       {/* Main Area */}
       <div className="flex-1 flex overflow-hidden relative">
-        <NodePalette />
+        <NodePalette onAddNode={handleAddNodeTap} />
         
         <div className="flex-1 relative h-full w-full" ref={reactFlowWrapper}>
           <ReactFlow

@@ -13,10 +13,10 @@ export default function AutomationsTeaser() {
           <div className="h-12 w-12 rounded-[16px] bg-black/10 flex items-center justify-center shrink-0">
             <Workflow className="h-6 w-6 text-black" />
           </div>
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="pill-badge bg-black/10 text-black !py-1 !px-3">COMING SOON</div>
-              <h3 className="font-display font-bold uppercase text-xl">Visual Automations</h3>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <div className="pill-badge bg-black/10 text-black !py-1 !px-3 shrink-0">COMING SOON</div>
+              <h3 className="font-display font-bold uppercase text-base sm:text-xl">Visual Automations</h3>
             </div>
             <p className="font-medium text-black/80 text-sm">
               Wire Job Finder → Resume Maker → Cold Mailer into one seamless flow.

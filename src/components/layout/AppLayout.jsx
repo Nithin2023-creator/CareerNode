@@ -1,25 +1,45 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
+import MobileNavDrawer from './MobileNavDrawer';
 import { AnimatePresence, motion } from 'framer-motion';
 import { initLenisScroll } from '../../lib/lenisScroll';
 
 export default function AppLayout() {
   const location = useLocation();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
     return initLenisScroll();
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-black p-4 md:p-6 lg:p-8 flex">
+    <div className="min-h-screen bg-[var(--color-background)] text-black p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row">
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden flex justify-between items-center mb-4">
+        <div className="flex flex-col items-start gap-1">
+          <span className="font-display font-bold text-2xl tracking-tight text-black leading-none uppercase">Career</span>
+          <span className="font-display font-bold text-2xl tracking-tight text-white bg-black px-1.5 rounded-xl leading-none uppercase mt-1">Node.</span>
+        </div>
+        <button 
+          onClick={() => setIsMobileNavOpen(true)}
+          aria-label="Open navigation menu"
+          className="h-11 w-11 flex items-center justify-center bg-white rounded-full shadow-[var(--shadow-soft)] hover:bg-gray-50 transition-colors"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
+
+      <MobileNavDrawer isOpen={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
+
       {/* Sidebar is fixed on the left inside a sticky container */}
-      <div className="sticky top-8 h-[calc(100vh-4rem)] z-20">
+      <div className="sticky top-8 h-[calc(100vh-4rem)] z-20 hidden lg:block">
         <Sidebar />
       </div>
       
       {/* Main Content Area - The Inner Frame */}
-      <main className="flex-1 bg-white rounded-[48px] ml-6 relative shadow-[var(--shadow-soft)] min-h-[calc(100vh-4rem)] overflow-hidden">
+      <main className="flex-1 bg-white rounded-[32px] lg:rounded-[48px] ml-0 lg:ml-6 relative shadow-[var(--shadow-soft)] min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4rem)] overflow-x-auto overflow-y-visible">
         <div className="mx-auto w-full h-full">
           <AnimatePresence mode="wait">
             <motion.div

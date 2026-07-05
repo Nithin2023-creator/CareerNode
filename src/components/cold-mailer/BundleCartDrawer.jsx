@@ -71,7 +71,7 @@ export default function BundleCartDrawer({ isOpen, onClose }) {
                         <span className="text-xs text-black/40 mb-2">${item.alaCartePrice}</span>
                         <button 
                           onClick={() => removeFromCart(item._id)}
-                          className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                          className="text-red-500 hover:text-red-700 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity p-1"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

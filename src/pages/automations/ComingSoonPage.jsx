@@ -78,13 +78,13 @@ export default function ComingSoonPage() {
         initial={{ opacity: 0, scale: 0.95 }} 
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="w-full h-48 bg-black/5 rounded-[32px] overflow-hidden relative flex items-center justify-center pointer-events-none border border-black/10"
+        className="w-full min-h-[12rem] md:h-48 bg-black/5 rounded-[32px] overflow-hidden relative flex items-center justify-center pointer-events-none border border-black/10 py-8 md:py-0"
       >
         <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
         
-        <div className="relative z-10 flex items-center gap-16 scale-75 md:scale-100">
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-16 px-4">
           {/* Node 1 */}
-          <div className="bento-card bg-white p-4 w-56 flex items-center gap-3 shadow-lg border-2 border-[var(--color-accent-blue)]">
+          <div className="bento-card bg-white p-4 w-full max-w-[14rem] md:w-56 flex items-center gap-3 shadow-lg border-2 border-[var(--color-accent-blue)]">
             <div className="h-10 w-10 rounded-[12px] bg-[var(--color-accent-blue)] flex items-center justify-center text-white"><Check className="h-5 w-5" /></div>
             <div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-black/50">Job Finder</div>
@@ -93,10 +93,11 @@ export default function ComingSoonPage() {
           </div>
           
           {/* Edge */}
-          <div className="absolute left-[14rem] top-1/2 -translate-y-1/2 w-16 h-1 bg-black/20" />
+          <div className="hidden md:block absolute left-[14rem] top-1/2 -translate-y-1/2 w-16 h-1 bg-black/20" />
+          <div className="md:hidden w-1 h-8 bg-black/20 rounded-full" />
           
           {/* Node 2 */}
-          <div className="bento-card bg-white p-4 w-56 flex items-center gap-3 shadow-lg border-2 border-[var(--color-accent-yellow)]">
+          <div className="bento-card bg-white p-4 w-full max-w-[14rem] md:w-56 flex items-center gap-3 shadow-lg border-2 border-[var(--color-accent-yellow)]">
             <div className="h-10 w-10 rounded-[12px] bg-[var(--color-accent-yellow)] flex items-center justify-center text-black"><PlaySquare className="h-5 w-5" /></div>
             <div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-black/50">Resume Maker</div>
@@ -105,10 +106,11 @@ export default function ComingSoonPage() {
           </div>
 
           {/* Edge */}
-          <div className="absolute left-[32rem] top-1/2 -translate-y-1/2 w-16 h-1 bg-black/20" />
+          <div className="hidden md:block absolute left-[32rem] top-1/2 -translate-y-1/2 w-16 h-1 bg-black/20" />
+          <div className="md:hidden w-1 h-8 bg-black/20 rounded-full" />
 
           {/* Node 3 */}
-          <div className="bento-card bg-white p-4 w-56 flex items-center gap-3 shadow-lg border-2 border-black/5">
+          <div className="bento-card bg-white p-4 w-full max-w-[14rem] md:w-56 flex items-center gap-3 shadow-lg border-2 border-black/5">
             <div className="h-10 w-10 rounded-[12px] bg-black flex items-center justify-center text-white"><Users className="h-5 w-5" /></div>
             <div>
               <div className="text-[9px] font-bold uppercase tracking-widest text-black/50">Cold Mailer</div>
@@ -194,11 +196,11 @@ export default function ComingSoonPage() {
               />
 
               <label
-                className="flex items-center justify-center gap-3 cursor-pointer group w-fit mx-auto"
+                className="flex items-center justify-center gap-3 cursor-pointer group w-full max-w-md mx-auto p-3 rounded-[20px] hover:bg-black/[0.02] transition-colors"
                 onClick={() => setWantsInsider((v) => !v)}
               >
-                <div className={`w-12 h-6 rounded-full transition-colors relative ${wantsInsider ? 'bg-[var(--color-accent-blue)]' : 'bg-black/10'}`}>
-                  <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${wantsInsider ? 'translate-x-6' : 'translate-x-0'}`} />
+                <div className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${wantsInsider ? 'bg-[var(--color-accent-blue)]' : 'bg-black/10'}`}>
+                  <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full transition-transform ${wantsInsider ? 'translate-x-5' : 'translate-x-0'}`} />
                 </div>
                 <span className="text-xs font-bold uppercase tracking-widest text-black/60 group-hover:text-black transition-colors flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5" />

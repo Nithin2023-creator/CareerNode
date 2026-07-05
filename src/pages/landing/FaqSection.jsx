@@ -56,7 +56,7 @@ export default function FaqSection() {
               </div>
             </button>
             <div 
-              className={`transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-96 opacity-100 pb-6 md:pb-8 px-6 md:px-8' : 'max-h-0 opacity-0 px-6 md:px-8 overflow-hidden'}`}
+              className={`transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-[2000px] opacity-100 pb-6 md:pb-8 px-6 md:px-8' : 'max-h-0 opacity-0 px-6 md:px-8 overflow-hidden'}`}
             >
               <div className="w-full h-[1px] bg-black/5 mb-6" />
               <p className="text-black/70 font-medium leading-relaxed">

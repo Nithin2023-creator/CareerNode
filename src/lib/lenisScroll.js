@@ -1,6 +1,7 @@
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { registerGSAP } from './gsap';
+import { isCoarsePointer } from './viewport';
 
 let lenisInstance = null;
 
@@ -9,6 +10,10 @@ export function getLenis() {
 }
 
 export function initLenisScroll() {
+  if (isCoarsePointer()) {
+    return () => {};
+  }
+
   const { ScrollTrigger } = registerGSAP();
 
   const lenis = new Lenis({

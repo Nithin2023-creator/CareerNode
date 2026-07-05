@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { coldMailerApi, uploadUrl } from '../../lib/api.js';
 import { useToast } from '../../lib/toast.jsx';
+import { isMobileViewport } from '../../lib/viewport.js';
 import { CAMPAIGN_STATUS_STYLES, RECIPIENT_STATUS_STYLES, computeStats, formatDate } from './helpers.js';
 
 const STAT_TILES = [
@@ -33,6 +34,16 @@ export default function CampaignDetailPage() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState(null);
   const pollRef = useRef(null);
+  const previewRef = useRef(null);
+
+  const selectRecipient = (recipient) => {
+    setSelected(recipient);
+    if (isMobileViewport()) {
+      requestAnimationFrame(() => {
+        previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+  };
 
   const load = useCallback(
     async ({ silent } = {}) => {
@@ -230,10 +241,10 @@ export default function CampaignDetailPage() {
         </div>
 
         {/* Stat tiles */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6">
           {STAT_TILES.map((tile) => (
-            <div key={tile.key} className="rounded-[20px] bg-black/[0.03] p-4">
-              <p className={`font-display text-3xl font-bold ${tile.color}`}>{stats[tile.key]}</p>
+            <div key={tile.key} className="rounded-[20px] bg-black/[0.03] p-3 sm:p-4">
+              <p className={`font-display text-2xl sm:text-3xl font-bold ${tile.color}`}>{stats[tile.key]}</p>
               <p className="text-xs font-bold uppercase tracking-widest text-black/40 mt-1">{tile.label}</p>
             </div>
           ))}
@@ -272,7 +283,29 @@ export default function CampaignDetailPage() {
           <div className="p-6 md:p-8 border-b border-black/10">
             <h3 className="font-display text-2xl font-bold uppercase">Recipients</h3>
           </div>
-          <div className="overflow-x-auto">
+          <div className="md:hidden divide-y divide-black/5">
+            {campaign.recipients.map((r, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => selectRecipient(r)}
+                className={`w-full text-left p-4 transition-colors hover:bg-black/[0.02] ${
+                  selected === r ? 'bg-[var(--color-accent-yellow)]/10' : ''
+                }`}
+              >
+                <div className="flex justify-between items-start gap-3 mb-2">
+                  <p className="font-bold truncate">{r.companyName || '—'}</p>
+                  <span className={`pill-badge shrink-0 ${RECIPIENT_STATUS_STYLES[r.status] || 'bg-black/5 text-black'}`}>
+                    {r.status}
+                  </span>
+                </div>
+                <p className="text-sm font-medium truncate">{r.hrName || '—'}</p>
+                <p className="text-sm text-black/50 truncate mt-1">{r.email}</p>
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-widest text-black/40">
@@ -286,7 +319,7 @@ export default function CampaignDetailPage() {
                 {campaign.recipients.map((r, i) => (
                   <tr
                     key={i}
-                    onClick={() => setSelected(r)}
+                    onClick={() => selectRecipient(r)}
                     className={`border-t border-black/5 cursor-pointer transition-colors hover:bg-black/[0.02] ${
                       selected === r ? 'bg-[var(--color-accent-yellow)]/10' : ''
                     }`}
@@ -310,8 +343,8 @@ export default function CampaignDetailPage() {
         </div>
 
         {/* Preview panel */}
-        <div className="lg:col-span-1">
-          <div className="bento-card p-6 md:p-8 bg-white sticky top-6">
+        <div className="lg:col-span-1" ref={previewRef}>
+          <div className="bento-card p-6 md:p-8 bg-white lg:sticky lg:top-6">
             <h3 className="font-display text-2xl font-bold uppercase mb-5">Preview</h3>
             {selected ? (
               <div className="space-y-4">

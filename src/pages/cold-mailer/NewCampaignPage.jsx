@@ -343,7 +343,7 @@ export default function NewCampaignPage() {
               {headers.map((header) => (
                 <div
                   key={header}
-                  className="flex items-center justify-between gap-4 p-4 rounded-[20px] bg-black/[0.03]"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 p-4 rounded-[20px] bg-black/[0.03]"
                 >
                   <span className="font-display font-bold truncate" title={header}>
                     {header}
@@ -351,7 +351,7 @@ export default function NewCampaignPage() {
                   <select
                     value={mapping[header] || 'dynamicData'}
                     onChange={(e) => setMapping((prev) => ({ ...prev, [header]: e.target.value }))}
-                    className="bg-white border border-black/10 rounded-full px-4 py-2 text-sm font-bold focus:outline-none focus:border-black"
+                    className="w-full sm:w-auto sm:min-w-[160px] bg-white border border-black/10 rounded-full px-4 py-2 text-sm font-bold focus:outline-none focus:border-black"
                   >
                     {STANDARD_FIELDS.map((f) => (
                       <option key={f} value={f}>

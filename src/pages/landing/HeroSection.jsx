@@ -107,7 +107,7 @@ export default function HeroSection() {
       </div>
 
       {/* Infinite Marquee */}
-      <div className="hero-marquee absolute bottom-8 w-full bg-white/50 backdrop-blur-sm py-4 overflow-hidden z-10 border-y border-black/5">
+      <div className="hero-marquee lg:absolute lg:bottom-8 w-full bg-white/50 backdrop-blur-sm py-4 overflow-hidden z-10 border-y border-black/5 mt-12 lg:mt-0">
         <div className="marquee-track space-x-8 pl-8 text-black font-display font-bold tracking-widest text-xl md:text-2xl uppercase whitespace-nowrap opacity-80 cursor-default" data-cursor="hover">
           <span>GET HIRED FASTER</span>
           <span>✦</span>

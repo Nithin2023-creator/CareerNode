@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Target, BarChart, Shield, Lock, RotateCcw, Clock } from 'lucide-react';
 
 const features = [
@@ -11,10 +11,15 @@ const features = [
 ];
 
 export default function FeatureMarquee() {
+  const [isPaused, setIsPaused] = useState(false);
+
   return (
     <section className="py-12 border-y border-black/10 bg-white overflow-hidden flex whitespace-nowrap">
       <div 
         className="marquee-track flex items-center hover:[animation-play-state:paused] cursor-default" 
+        style={isPaused ? { animationPlayState: 'paused' } : undefined}
+        onTouchStart={() => setIsPaused(true)}
+        onTouchEnd={() => setIsPaused(false)}
         data-cursor="hover"
       >
         {/* Duplicating the array to ensure a seamless infinite scroll */}

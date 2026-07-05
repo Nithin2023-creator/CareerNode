@@ -25,7 +25,8 @@ export default function ProgressPipeline({ status }) {
   }
 
   return (
-    <div className="w-full flex items-center justify-between relative">
+    <div className="w-full overflow-x-auto pb-2 hide-scrollbar md:overflow-visible">
+      <div className="min-w-[520px] md:min-w-0 flex items-center justify-between relative">
       {/* Background track line */}
       <div className="absolute left-[10%] right-[10%] top-1/2 -translate-y-1/2 h-1 bg-black/5 z-0" />
       
@@ -79,6 +80,7 @@ export default function ProgressPipeline({ status }) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

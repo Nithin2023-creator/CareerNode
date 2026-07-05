@@ -103,7 +103,28 @@ export default function WalletPage() {
             <p className="text-xs">Your credit purchases and expenditures will appear here.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            {/* Mobile card list */}
+            <div className="md:hidden space-y-3">
+              {wallet.transactions.map((tx) => (
+                <div key={tx.id} className="rounded-[16px] border border-black/10 p-4 bg-black/[0.02]">
+                  <div className="flex justify-between items-start gap-3 mb-2">
+                    <p className="text-sm font-bold">{tx.description}</p>
+                    <div className={`inline-flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-md shrink-0 ${tx.type === 'purchase' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                      {tx.type === 'purchase' ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                      {tx.type === 'purchase' ? '+' : ''}{tx.credits}
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-xs font-medium text-black/50">
+                    <span>{formatDate(tx.date)}</span>
+                    <span>Balance: {tx.balanceAfter}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-black/10">
@@ -129,7 +150,8 @@ export default function WalletPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </div>
 

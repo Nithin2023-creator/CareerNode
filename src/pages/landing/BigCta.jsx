@@ -10,13 +10,13 @@ export default function BigCta() {
       <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent"></div>
       
       <div className="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
-        <h2 className="font-display text-fluid-h2 lg:text-[120px] font-bold uppercase leading-[0.85] mb-12">
+        <h2 className="font-display text-fluid-h2 font-bold uppercase leading-[0.85] mb-12">
           STOP APPLYING.<br/>
           <span className="text-[var(--color-accent-yellow)]">START HACKING.</span>
         </h2>
         <MagneticButton>
-          <Link to="/dashboard" className="inline-flex items-center justify-center px-12 py-6 bg-white text-black font-display font-bold text-2xl uppercase transition-all hover:bg-[var(--color-accent-blue)] hover:text-white hover:-translate-y-1 rounded-full gap-4 group shadow-[var(--shadow-soft)]" data-cursor="hover">
-            ENTER THE NODE <ArrowRight className="h-8 w-8 group-hover:translate-x-2 transition-transform" />
+          <Link to="/dashboard" className="w-full max-w-sm sm:w-auto inline-flex items-center justify-center px-8 sm:px-12 py-5 sm:py-6 bg-white text-black font-display font-bold text-lg sm:text-2xl uppercase transition-all hover:bg-[var(--color-accent-blue)] hover:text-white hover:-translate-y-1 rounded-full gap-3 sm:gap-4 group shadow-[var(--shadow-soft)]" data-cursor="hover">
+            ENTER THE NODE <ArrowRight className="h-6 w-6 sm:h-8 sm:w-8 group-hover:translate-x-2 transition-transform shrink-0" />
           </Link>
         </MagneticButton>
         <div className="mt-16 flex flex-wrap justify-center gap-6 font-medium text-white/70">

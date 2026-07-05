@@ -64,9 +64,11 @@
     box-shadow: var(--shadow-soft);
   }
 
-  .bento-card:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-lift);
+  @media (hover: hover) and (pointer: fine) {
+    .bento-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lift);
+    }
   }
   
   .glass-panel {
@@ -115,7 +117,19 @@
   .container-wide {
     @apply mx-auto w-full;
     max-width: 2000px;
-    padding-inline: 40px;
+    padding-inline: 16px;
+  }
+
+  @media (min-width: 640px) {
+    .container-wide {
+      padding-inline: 24px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-wide {
+      padding-inline: 40px;
+    }
   }
 
   .hide-scrollbar {
@@ -164,6 +178,12 @@
   display: flex;
   width: fit-content;
   animation: marquee 20s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
 }
 
 ::-webkit-scrollbar {

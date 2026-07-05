@@ -57,6 +57,8 @@ export default function TestimonialsSection() {
         className="relative max-w-4xl mx-auto"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
+        onTouchStart={() => setIsPaused(true)}
+        onTouchEnd={() => setIsPaused(false)}
         data-cursor="hover"
       >
         <div className="overflow-hidden relative rounded-[32px] p-2">
@@ -95,15 +97,20 @@ export default function TestimonialsSection() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             {testimonials.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  activeIndex === i ? 'bg-black scale-125' : 'bg-black/20 hover:bg-black/40'
-                }`}
-              />
+                aria-label={`Go to testimonial ${i + 1}`}
+                className="min-h-11 min-w-11 flex items-center justify-center rounded-full"
+              >
+                <span
+                  className={`block rounded-full transition-all duration-300 ${
+                    activeIndex === i ? 'w-3 h-3 bg-black scale-125' : 'w-2.5 h-2.5 bg-black/20 hover:bg-black/40'
+                  }`}
+                />
+              </button>
             ))}
           </div>
 

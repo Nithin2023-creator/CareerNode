@@ -31,10 +31,10 @@ export default function MyBundlesPage() {
     <div className="max-w-7xl mx-auto space-y-12 pb-24">
       {/* Header */}
       <div className="space-y-6">
-        <h1 className="font-display text-5xl md:text-6xl font-bold uppercase tracking-tight">
+        <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-bold uppercase tracking-tight">
           My <span className="text-[var(--color-accent-blue)]">Bundles</span>
         </h1>
-        <p className="text-xl text-black/60 max-w-2xl leading-relaxed">
+        <p className="text-base md:text-xl text-black/60 max-w-2xl leading-relaxed">
           Manage your purchased HR contact bundles and launch outreach campaigns directly to verified decision-makers.
         </p>
       </div>

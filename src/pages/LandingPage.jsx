@@ -105,35 +105,38 @@ export default function LandingPage() {
         window.addEventListener(SPLASH_COMPLETE_EVENT, startHeroIntroRef.current, { once: true });
       }
 
-      gsap.to('.parallax-badge-1', {
-        y: -150,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero-section',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 0.6,
-        },
-      });
-      gsap.to('.parallax-badge-2', {
-        y: 150,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero-section',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 0.6,
-        },
-      });
-      gsap.to('.parallax-badge-3', {
-        y: -100,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero-section',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 0.6,
-        },
+      const parallaxMm = gsap.matchMedia();
+      parallaxMm.add('(min-width: 1024px)', () => {
+        gsap.to('.parallax-badge-1', {
+          y: -150,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.hero-section',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.6,
+          },
+        });
+        gsap.to('.parallax-badge-2', {
+          y: 150,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.hero-section',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.6,
+          },
+        });
+        gsap.to('.parallax-badge-3', {
+          y: -100,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.hero-section',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.6,
+          },
+        });
       });
 
       revealOnScroll('.toolkit-card', 0.2);
@@ -167,7 +170,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div ref={container} className="w-full relative bg-[var(--color-background)]">
+    <div ref={container} className="w-full relative bg-[var(--color-background)] overflow-x-hidden">
       <HeroSection />
       <TrustStrip />
       <HowItWorks />

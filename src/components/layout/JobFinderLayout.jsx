@@ -68,6 +68,10 @@ function JobFinderLayoutInner() {
             </>
           )}
           
+          <NavLink to="/dashboard/job-finder/wallet" className="flex sm:hidden h-10 w-10 rounded-full bg-[var(--color-accent-yellow)]/20 text-black hover:bg-[var(--color-accent-yellow)]/40 transition-colors items-center justify-center shrink-0" aria-label={`Wallet balance: ${wallet.balance} credits`}>
+            <Wallet className="h-4 w-4" />
+          </NavLink>
+
           <NavLink to="/dashboard/job-finder/wallet" className="hidden sm:flex pill-badge bg-[var(--color-accent-yellow)]/20 text-black hover:bg-[var(--color-accent-yellow)]/40 transition-colors h-10 md:h-12 items-center">
             <Wallet className="h-4 w-4 mr-2" />
             <span className="font-display font-bold text-lg leading-none">{wallet.balance}</span>

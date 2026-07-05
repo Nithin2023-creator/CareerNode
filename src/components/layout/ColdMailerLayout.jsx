@@ -34,7 +34,7 @@ function ColdMailerHeader() {
           </p>
         </motion.div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}>
             <Link 
               to="/dashboard/job-finder/wallet"
