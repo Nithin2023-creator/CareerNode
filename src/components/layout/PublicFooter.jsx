@@ -37,15 +37,16 @@ export default function PublicFooter() {
             <ul className="space-y-4">
               <li><Link to="/#about" className="text-white/80 hover:text-white font-medium transition-colors">About Us</Link></li>
               <li><Link to="/#faq" className="text-white/80 hover:text-white font-medium transition-colors">FAQ</Link></li>
-              <li><a href="mailto:support@careernode.com" className="text-white/80 hover:text-white font-medium transition-colors">Contact</a></li>
+              <li><Link to="/contact" className="text-white/80 hover:text-white font-medium transition-colors">Contact</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-display font-bold uppercase tracking-widest text-sm mb-6 text-white/50">Legal</h4>
             <ul className="space-y-4">
-              <li><Link to="/#faq" className="text-white/80 hover:text-white font-medium transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/#faq" className="text-white/80 hover:text-white font-medium transition-colors">Terms of Service</Link></li>
+              <li><Link to="/privacy" className="text-white/80 hover:text-white font-medium transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="text-white/80 hover:text-white font-medium transition-colors">Terms of Service</Link></li>
+              <li><Link to="/refund" className="text-white/80 hover:text-white font-medium transition-colors">Refund Policy</Link></li>
             </ul>
           </div>
         </div>

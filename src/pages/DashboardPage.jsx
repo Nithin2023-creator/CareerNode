@@ -2,9 +2,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Search, Mail, FileText, ArrowUpRight, Workflow } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ShieldCheck } from 'lucide-react';
 import { features } from '../config/features';
+import { membershipApi } from '../lib/api';
 
 export default function DashboardPage() {
+  const [myPlan, setMyPlan] = React.useState(null);
+
+  React.useEffect(() => {
+    membershipApi.getMe().then(res => setMyPlan(res)).catch(console.error);
+  }, []);
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -149,6 +157,33 @@ export default function DashboardPage() {
               <Workflow className="h-6 w-6 text-black" />
             </div>
             <h2 className="font-display text-4xl font-bold uppercase leading-[0.9] mb-2 text-black">Visual<br/>Automations.</h2>
+          </div>
+        </motion.div>
+
+        {/* Membership Status */}
+        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-8 flex flex-col justify-between">
+          <Link to="/dashboard/billing" className="absolute inset-0 z-10" />
+          <div className="flex justify-between items-start z-10 relative">
+            <div className="pill-badge bg-brand-primary/10 text-brand-primary">
+              MEMBERSHIP
+            </div>
+            <div className="h-12 w-12 rounded-full bg-white shadow-[var(--shadow-soft)] flex items-center justify-center text-black transition-transform group-hover:scale-110">
+              <ArrowUpRight className="h-5 w-5" />
+            </div>
+          </div>
+          
+          <div className="z-10 relative">
+            <div className="h-12 w-12 rounded-[16px] bg-[var(--color-accent-blue)] flex items-center justify-center mb-4 shadow-[var(--shadow-soft)]">
+              <ShieldCheck className="h-6 w-6 text-white" />
+            </div>
+            <h2 className="font-display text-4xl font-bold uppercase leading-[0.9] mb-2 text-black">
+              {myPlan?.planId?.badge || 'FREE'}<br/>PLAN
+            </h2>
+            {myPlan?.planId?.tier === 'free' && (
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--color-accent-blue)] mt-2 inline-block hover:underline">
+                Upgrade to Pro &rarr;
+              </span>
+            )}
           </div>
         </motion.div>
         

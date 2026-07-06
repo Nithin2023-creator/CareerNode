@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBundleCart } from './BundleCartContext';
 import { useWallet } from '../../context/WalletContext';
-import { bundlesApi } from '../../lib/api';
+import { bundlesApi, membershipApi } from '../../lib/api';
 import { CreditCard, Coins, ArrowRight, ShieldCheck, Tag } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { openCashfreeCheckout } from '../../lib/cashfree';
 
 export default function BundleCheckoutPage() {
   const navigate = useNavigate();
@@ -13,9 +15,17 @@ export default function BundleCheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('credits');
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
+  const [myPlan, setMyPlan] = useState(null);
+
+  React.useEffect(() => {
+    membershipApi.getMe().then(res => setMyPlan(res)).catch(console.error);
+  }, []);
 
   const totalCredits = cart.reduce((sum, item) => sum + item.creditCost, 0);
-  const totalAlaCarte = cart.reduce((sum, item) => sum + item.alaCartePrice, 0);
+  const rawTotalAlaCarte = cart.reduce((sum, item) => sum + item.alaCartePrice, 0);
+  const discountPercent = myPlan?.planId?.alaCarteDiscountPercent || 0;
+  const totalAlaCarte = (rawTotalAlaCarte * (1 - discountPercent / 100)).toFixed(2);
+  
   const shortfall = Math.max(0, totalCredits - (wallet?.balance || 0));
   const canUseCredits = shortfall === 0;
 
@@ -41,14 +51,32 @@ export default function BundleCheckoutPage() {
     setProcessing(true);
     setError(null);
     try {
-      // Process each item in cart
       for (const bundle of cart) {
-        await bundlesApi.purchaseBundle(bundle._id, paymentMethod);
+        if (paymentMethod === 'credits') {
+          await bundlesApi.purchaseBundle(bundle._id, paymentMethod);
+        } else {
+          const { orderId, paymentSessionId } = await bundlesApi.purchaseBundle(bundle._id, paymentMethod);
+          await openCashfreeCheckout(paymentSessionId);
+          
+          let status = 'created';
+          let retries = 0;
+          while (status === 'created' && retries < 15) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const res = await bundlesApi.getOrderStatus(orderId);
+            status = res.status;
+            retries++;
+          }
+          
+          if (status !== 'paid') {
+            throw new Error('Payment failed or was cancelled for ' + bundle.name);
+          }
+        }
       }
       await refreshWallet();
       clearCart();
       navigate('/dashboard/emailer/bundles');
     } catch (err) {
+      console.error(err);
       setError(err.message || 'Checkout failed. Please try again.');
     } finally {
       setProcessing(false);
@@ -118,8 +146,21 @@ export default function BundleCheckoutPage() {
                     Balance: <span className="font-bold text-black">{wallet?.balance || 0}</span> cr
                   </div>
                   {!canUseCredits && (
-                    <div className="text-xs text-red-600 mt-2 font-medium bg-red-50 p-2 rounded-lg">
-                      Shortfall: {shortfall} cr
+                    <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl space-y-2">
+                      <div className="text-xs text-red-600 font-bold uppercase tracking-wider flex justify-between">
+                        <span>Shortfall</span>
+                        <span>{shortfall} cr</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {myPlan?.planId?.tier === 'free' && (
+                          <Link to="/dashboard/billing" className="text-xs px-3 py-1.5 rounded-lg bg-white border border-[var(--color-accent-blue)] text-[var(--color-accent-blue)] font-bold hover:bg-[var(--color-accent-blue)] hover:text-white transition-colors">
+                            UPGRADE TO PRO
+                          </Link>
+                        )}
+                        <Link to="/dashboard/emailer/marketplace" className="text-xs px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 font-bold hover:bg-red-50 transition-colors">
+                          TOP UP WALLET
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -148,7 +189,13 @@ export default function BundleCheckoutPage() {
               </label>
             </div>
 
-            <div className="border-t border-black/10 pt-6 mb-8">
+            <div className="border-t border-black/10 pt-6 mb-8 space-y-2">
+              {paymentMethod === 'alacarte' && discountPercent > 0 && (
+                <div className="flex justify-between items-center text-green-600 font-bold text-sm tracking-wider uppercase">
+                  <span>Pro Discount ({discountPercent}%)</span>
+                  <span>-${(rawTotalAlaCarte * (discountPercent / 100)).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-end">
                 <span className="font-bold text-xl">Total:</span>
                 <div className="text-right">

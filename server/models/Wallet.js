@@ -20,7 +20,7 @@ const transactionSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    enum: ['job-finder', 'cold-mailer'],
+    enum: ['job-finder', 'cold-mailer', 'membership'],
     required: true,
   },
   date: {
@@ -30,7 +30,12 @@ const transactionSchema = new mongoose.Schema({
 });
 
 const walletSchema = new mongoose.Schema({
-  // Singleton: we'll use a fixed _id or just findOne()
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+  },
   balance: {
     type: Number,
     default: 0,

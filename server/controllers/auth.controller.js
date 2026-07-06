@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Wallet = require('../models/Wallet');
+const MembershipPlan = require('../models/MembershipPlan');
+const UserMembership = require('../models/UserMembership');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -47,9 +49,22 @@ exports.googleLogin = async (req, res, next) => {
         user = await User.create({ googleId, email, name, picture });
         // Initialize wallet for new user (100 credits for free)
         await Wallet.create({
-          userEmail: email,
+          userId: user._id,
           balance: 100,
         });
+        
+        // Grant free membership
+        const freePlan = await MembershipPlan.findOne({ tier: 'free' });
+        if (freePlan) {
+          const nextYear = new Date();
+          nextYear.setFullYear(nextYear.getFullYear() + 10);
+          await UserMembership.create({
+            userId: user._id,
+            planId: freePlan._id,
+            status: 'active',
+            renewsAt: nextYear,
+          });
+        }
       }
     }
 
@@ -61,7 +76,8 @@ exports.googleLogin = async (req, res, next) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        picture: user.picture
+        picture: user.picture,
+        isAdmin: user.isAdmin
       }
     });
 
@@ -94,9 +110,22 @@ exports.signup = async (req, res, next) => {
 
     // Initialize wallet
     await Wallet.create({
-      userEmail: email,
+      userId: user._id,
       balance: 100,
     });
+    
+    // Grant free membership
+    const freePlan = await MembershipPlan.findOne({ tier: 'free' });
+    if (freePlan) {
+      const nextYear = new Date();
+      nextYear.setFullYear(nextYear.getFullYear() + 10);
+      await UserMembership.create({
+        userId: user._id,
+        planId: freePlan._id,
+        status: 'active',
+        renewsAt: nextYear,
+      });
+    }
 
     const authToken = signToken(user);
 
@@ -106,13 +135,27 @@ exports.signup = async (req, res, next) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        picture: user.picture
+        picture: user.picture,
+        isAdmin: user.isAdmin
       }
     });
   } catch (error) {
     console.error('Signup error:', error);
     next(error);
   }
+};
+
+exports.getMe = async (req, res) => {
+  const user = req.user;
+  res.status(200).json({
+    user: {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      isAdmin: user.isAdmin,
+    },
+  });
 };
 
 exports.login = async (req, res, next) => {
@@ -144,7 +187,8 @@ exports.login = async (req, res, next) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        picture: user.picture
+        picture: user.picture,
+        isAdmin: user.isAdmin
       }
     });
   } catch (error) {

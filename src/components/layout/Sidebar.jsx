@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
 import { navItems } from '../../config/navItems';
+import UserMenu from './UserMenu';
 
 export default function Sidebar() {
   return (
@@ -51,18 +52,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* User Card */}
-      <div className="bg-white/80 backdrop-blur-md rounded-[32px] p-5 shadow-[var(--shadow-soft)]">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-[16px] bg-[var(--color-accent-blue)] flex items-center justify-center text-white font-display font-bold text-xl shadow-[var(--shadow-soft)]">
-            NF
-          </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-black uppercase tracking-tight text-sm">New Fresher</span>
-            <span className="text-[10px] text-black font-bold uppercase tracking-widest bg-[var(--color-accent-yellow)] px-2 py-0.5 rounded-full w-fit mt-1 shadow-sm">PRO PLAN</span>
-          </div>
-        </div>
-      </div>
+      <UserMenu />
     </aside>
   );
 }

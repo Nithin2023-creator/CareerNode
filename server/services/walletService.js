@@ -1,30 +1,27 @@
 const Wallet = require('../models/Wallet');
 const httpError = require('http-errors');
 
-// Fixed ID since we don't have users, singleton pattern
-const WALLET_ID = '60d5ecb54cb9a1001f5c5d00'; // Just a valid hex objectid
-
-const getWalletDocument = async () => {
-  let wallet = await Wallet.findById(WALLET_ID);
+const getWalletDocument = async (userId) => {
+  let wallet = await Wallet.findOne({ userId });
   if (!wallet) {
-    wallet = new Wallet({ _id: WALLET_ID, balance: 0, transactions: [] });
+    wallet = new Wallet({ userId, balance: 0, transactions: [] });
     await wallet.save();
   }
   return wallet;
 };
 
-exports.getWallet = async () => {
-  const wallet = await getWalletDocument();
+exports.getWallet = async (userId) => {
+  const wallet = await getWalletDocument(userId);
   // Sort transactions by date descending
   wallet.transactions.sort((a, b) => b.date - a.date);
   return wallet;
 };
 
-exports.addCredits = async (amount, description, source) => {
-  const wallet = await getWalletDocument();
+exports.addCredits = async (userId, amount, description, source) => {
+  const wallet = await getWalletDocument(userId);
   
   const updated = await Wallet.findOneAndUpdate(
-    { _id: WALLET_ID },
+    { userId },
     {
       $inc: { balance: amount },
       $push: {
@@ -38,18 +35,18 @@ exports.addCredits = async (amount, description, source) => {
         }
       }
     },
-    { new: true }
+    { new: true, upsert: true }
   );
   
   return updated;
 };
 
-exports.spendCredits = async (amount, description, source) => {
-  const wallet = await getWalletDocument();
+exports.spendCredits = async (userId, amount, description, source) => {
+  const wallet = await getWalletDocument(userId);
   
   const updated = await Wallet.findOneAndUpdate(
     { 
-      _id: WALLET_ID,
+      userId,
       balance: { $gte: amount } // ensure sufficient funds
     },
     {

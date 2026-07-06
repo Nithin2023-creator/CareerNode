@@ -19,7 +19,10 @@ export default function CompanyProductCard({ company, isSubscribed }) {
           )}
           
           {company.tier === 'premium' ? (
-            <span className="pill-badge bg-[var(--color-accent-yellow)]/20 text-[var(--color-accent-yellow)] border-[var(--color-accent-yellow)]/30">PREMIUM</span>
+            <div className="flex flex-col items-end gap-1">
+              <span className="pill-badge bg-[var(--color-accent-yellow)]/20 text-[var(--color-accent-yellow)] border-[var(--color-accent-yellow)]/30">PREMIUM</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-green-600 bg-green-50 px-1.5 py-0.5 rounded">Pro saves 15%</span>
+            </div>
           ) : (
             <span className="pill-badge bg-black/5 text-black/50">STANDARD</span>
           )}
@@ -51,7 +54,7 @@ export default function CompanyProductCard({ company, isSubscribed }) {
         </div>
 
         {isSubscribed ? (
-          <button disabled className="w-full pill-btn bg-black/5 text-black/40 border border-transparent cursor-not-allowed flex justify-center items-center gap-2">
+          <button disabled className="w-full inline-flex justify-center items-center gap-2 px-6 py-3 rounded-full bg-white text-black/40 border border-black/10 font-bold cursor-not-allowed shadow-[var(--shadow-soft)]">
             <Check className="h-5 w-5" /> SUBSCRIBED
           </button>
         ) : inCart ? (

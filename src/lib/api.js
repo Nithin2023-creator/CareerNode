@@ -1,11 +1,21 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 const jsonHeaders = { 'Content-Type': 'application/json' };
 
+const getAuthHeaders = (extraHeaders = {}) => {
+  const headers = { ...extraHeaders };
+  const token = localStorage.getItem('cn_token');
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 export const createApiClient = (baseUrl) => {
   async function request(path, options = {}) {
     let response;
     try {
-      response = await fetch(`${baseUrl}${path}`, options);
+      const headers = getAuthHeaders(options.headers);
+      response = await fetch(`${baseUrl}${path}`, { ...options, headers });
     } catch {
       throw new Error('Cannot reach the server. Is the backend running?');
     }
@@ -52,6 +62,7 @@ export const authApi = {
   google: (token) => api.postJson('/auth/google', { token }),
   login: (body) => api.postJson('/auth/login', body),
   signup: (body) => api.postJson('/auth/signup', body),
+  me: () => api.get('/auth/me'),
 };
 
 // Cold mailer domain endpoints.
@@ -77,6 +88,15 @@ export const walletApi = {
   getWallet: () => api.get('/wallet'),
   getPacks: () => api.get('/wallet/packs'),
   purchasePack: (packId) => api.postJson('/wallet/purchase', { packId }),
+  getOrderStatus: (orderId) => api.get(`/wallet/orders/${orderId}`),
+};
+
+// Membership endpoints
+export const membershipApi = {
+  getPlans: () => api.get('/membership/plans'),
+  getMe: () => api.get('/membership/me'),
+  subscribe: (planId) => api.postJson('/membership/subscribe', { planId }),
+  cancel: () => api.postJson('/membership/cancel', {}),
 };
 
 // Bundles endpoints on the main backend
@@ -86,6 +106,7 @@ export const bundlesApi = {
   listPurchasedBundles: () => api.get('/bundles/purchased'),
   getBundleRecipients: (id) => api.get(`/bundles/${id}/recipients`),
   purchaseBundle: (id, paymentMethod) => api.postJson(`/bundles/${id}/purchase`, { paymentMethod }),
+  getOrderStatus: (orderId) => api.get(`/bundles/orders/${orderId}`),
 };
 
 // Waitlist endpoints
@@ -100,26 +121,54 @@ export const jobFinderClient = createApiClient(
 );
 
 export const jobFinderApi = {
-  // Marketplace & Checkout
-  listMarketplaceCompanies: () => jobFinderClient.get('/marketplace/companies'),
-  checkout: (cartItems, paymentMethod) => jobFinderClient.postJson('/checkout', { cartItems, paymentMethod }),
-  
-  // Wallet & Credits
-  getWallet: () => jobFinderClient.get('/wallet'),
-  purchaseCreditPack: (packId) => jobFinderClient.postJson('/wallet/purchase', { packId }),
-  
-  // Subscriptions
-  listSubscriptions: () => jobFinderClient.get('/subscriptions'),
-  getSubscription: (id) => jobFinderClient.get(`/subscriptions/${id}`),
+  // Marketplace & Checkout (main backend)
+  listMarketplaceCompanies: () => api.get('/marketplace/companies'),
+  checkout: (cartItems, paymentMethod) => api.postJson('/subscriptions/checkout', { cartItems, paymentMethod }),
+  getOrderStatus: (orderId) => api.get(`/subscriptions/orders/${orderId}`),
+
+  // Subscriptions (main backend)
+  listSubscriptions: () => api.get('/subscriptions'),
+  getSubscription: (id) => api.get(`/subscriptions/${id}`),
   renewSubscription: (id) => jobFinderClient.postJson(`/subscriptions/${id}/renew`),
   cancelSubscription: (id) => jobFinderClient.postJson(`/subscriptions/${id}/cancel`),
-  
-  // Notifications
+
+  // Notifications (stub API until migrated)
   listNotifications: () => jobFinderClient.get('/notifications'),
   markNotificationRead: (id) => jobFinderClient.postJson(`/notifications/${id}/read`),
 
-  // Existing helpers
   toggleBookmark: (subId, jobId) => jobFinderClient.postJson(`/subscriptions/${subId}/jobs/${jobId}/bookmark`),
   getSettings: () => jobFinderClient.get('/settings'),
   updateSettings: (body) => jobFinderClient.put('/settings', body),
+};
+
+// Admin Endpoints
+export const adminApi = {
+  getStats: () => api.get('/admin/stats'),
+  listCompanies: () => api.get('/admin/companies'),
+  createCompany: (body) => api.postJson('/admin/companies', body),
+  updateCompany: (id, body) => api.patchJson(`/admin/companies/${id}`, body),
+  deleteCompany: (id) => api.del(`/admin/companies/${id}`),
+  scrapeCompany: (id) => api.postJson(`/admin/companies/${id}/scrape`, {}),
+
+  listBundles: () => api.get('/admin/bundles'),
+  createBundle: (body) => api.postJson('/admin/bundles', body),
+  updateBundle: (id, body) => api.patchJson(`/admin/bundles/${id}`, body),
+  deleteBundle: (id) => api.del(`/admin/bundles/${id}`),
+  uploadBundleContacts: (id, contacts) => api.postJson(`/admin/bundles/${id}/upload-contacts`, { contacts }),
+
+  listCreditPacks: () => api.get('/admin/credit-packs'),
+  createCreditPack: (body) => api.postJson('/admin/credit-packs', body),
+  updateCreditPack: (id, body) => api.patchJson(`/admin/credit-packs/${id}`, body),
+  deleteCreditPack: (id) => api.del(`/admin/credit-packs/${id}`),
+
+  listUsers: () => api.get('/admin/users'),
+  toggleAdmin: (id) => api.patchJson(`/admin/users/${id}/toggle-admin`, {}),
+
+  listWaitlist: () => api.get('/admin/waitlist'),
+  listTransactions: () => api.get('/admin/transactions'),
+  
+  listMembershipPlans: () => api.get('/admin/membership-plans'),
+  createMembershipPlan: (body) => api.postJson('/admin/membership-plans', body),
+  updateMembershipPlan: (id, body) => api.patchJson(`/admin/membership-plans/${id}`, body),
+  deleteMembershipPlan: (id) => api.del(`/admin/membership-plans/${id}`),
 };

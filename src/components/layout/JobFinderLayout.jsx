@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Store, ListPlus, Wallet, Settings, ShoppingCart, Info } from 'lucide-react';
+import { Store, ListPlus, Wallet, Settings, ShoppingCart, Info, AlertCircle } from 'lucide-react';
 import NotificationsBell from '../job-finder/NotificationsBell';
 import CartDrawer from '../job-finder/CartDrawer';
 import JobFinderIntroModal from '../job-finder/JobFinderIntroModal';
@@ -31,9 +31,23 @@ function JobFinderLayoutInner() {
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false);
 
   const showIntroTrigger = !inlineIntroOpen;
+  const isLowBalance = wallet.balance > 0 && wallet.balance < 20;
 
   return (
     <div className="space-y-10">
+      {isLowBalance && (
+        <div className="bento-card bg-[var(--color-accent-yellow)]/10 border-2 border-[var(--color-accent-yellow)]/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-black/60 shrink-0 mt-0.5" />
+            <p className="text-sm font-medium text-black/70">
+              Your wallet is running low ({wallet.balance} credits). Top up to keep subscribing to companies.
+            </p>
+          </div>
+          <Link to="/dashboard/job-finder/wallet" className="pill-btn-secondary !py-2 !px-4 text-xs shrink-0 bg-white">
+            TOP UP
+          </Link>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>

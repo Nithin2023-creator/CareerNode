@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const bundlePurchaseSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  },
   bundleId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Bundle',
@@ -21,5 +27,6 @@ const bundlePurchaseSchema = new mongoose.Schema({
   },
 });
 
-// Since there is no user model, we just record purchases globally for the single tenant.
+bundlePurchaseSchema.index({ userId: 1, bundleId: 1 }, { unique: true });
+
 module.exports = mongoose.model('BundlePurchase', bundlePurchaseSchema);

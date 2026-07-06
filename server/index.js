@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
 const { campaignService } = require('./services/campaignService');
+const { startMembershipRenewalJob } = require('./services/membershipRenewalJob');
 
 const campaignRoutes = require('./routes/campaigns.routes');
 const csvImportRoutes = require('./routes/csvImports.routes');
@@ -12,6 +13,10 @@ const bundlesRoutes = require('./routes/bundles.routes');
 const walletRoutes = require('./routes/wallet.routes');
 const waitlistRoutes = require('./routes/waitlist.routes');
 const authRoutes = require('./routes/auth.routes');
+const adminRoutes = require('./routes/admin.routes');
+const marketplaceRoutes = require('./routes/marketplace.routes');
+const membershipRoutes = require('./routes/membership.routes');
+const subscriptionsRoutes = require('./routes/subscriptions.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +27,9 @@ connectDB().then(async () => {
     if (recovered > 0) {
       console.log(`Recovered ${recovered} orphaned campaign(s) stuck in 'Sending' -> 'Paused'.`);
     }
+    
+    // Start background jobs
+    startMembershipRenewalJob();
   } catch (error) {
     console.error('Failed to recover orphaned campaigns:', error.message);
   }
@@ -32,7 +40,13 @@ const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map((o) => o.trim());
 
+const paymentsRoutes = require('./routes/payments.routes');
+
 app.use(cors({ origin: allowedOrigins }));
+
+// Webhook route requires raw body for signature verification
+app.use('/api/payments', express.raw({ type: 'application/json' }), paymentsRoutes);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -46,6 +60,10 @@ app.use('/api/bundles', bundlesRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/membership', membershipRoutes);
+app.use('/api/subscriptions', subscriptionsRoutes);
 
 // Centralized error handler: honors service-thrown statusCode, defaults to 500.
 app.use((err, req, res, _next) => {

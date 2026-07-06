@@ -2,27 +2,33 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CreditCard, Coins, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useCart } from './CartContext';
-import { jobFinderApi } from '../../lib/api';
-import { withMockFallback } from './helpers';
+import { jobFinderApi, membershipApi } from '../../lib/api';
 import { useToast } from '../../lib/toast';
+import { openCashfreeCheckout } from '../../lib/cashfree';
 
 export default function CheckoutPage() {
-  const { cart, wallet, clearCart, spendCredits } = useCart();
+  const { cart, wallet, clearCart, refreshWallet } = useCart();
   const navigate = useNavigate();
   const toast = useToast();
-  
-  const [paymentMethod, setPaymentMethod] = useState('credits'); // 'credits' | 'alacarte'
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Totals
+  const [paymentMethod, setPaymentMethod] = useState('credits');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [myPlan, setMyPlan] = useState(null);
+
+  React.useEffect(() => {
+    membershipApi.getMe().then(res => setMyPlan(res)).catch(console.error);
+  }, []);
+
   const totalCredits = cart.reduce((sum, item) => sum + (item.creditCost || 0), 0);
-  const totalCash = cart.reduce((sum, item) => sum + (item.alaCartePrice || 0), 0).toFixed(2);
-  
+  const discountPercent = myPlan?.planId?.alaCarteDiscountPercent || 0;
+  const rawTotalCash = cart.reduce((sum, item) => sum + (item.alaCartePrice || 0), 0);
+  const totalCash = (rawTotalCash * (1 - discountPercent / 100)).toFixed(2);
+
   const hasEnoughCredits = wallet.balance >= totalCredits;
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    
+
     if (paymentMethod === 'credits' && !hasEnoughCredits) {
       toast.error('Insufficient credits. Please top up your wallet.');
       return;
@@ -30,18 +36,39 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
     try {
-      // Mock API call
-      await withMockFallback(jobFinderApi.checkout(cart, paymentMethod), { success: true });
-      
       if (paymentMethod === 'credits') {
-        spendCredits(totalCredits, `Marketplace checkout (${cart.length} companies)`);
+        await jobFinderApi.checkout(cart, paymentMethod);
+      } else {
+        const { orderId, paymentSessionId } = await jobFinderApi.checkout(cart, paymentMethod);
+        await openCashfreeCheckout(paymentSessionId);
+        
+        let status = 'created';
+        let retries = 0;
+        while (status === 'created' && retries < 15) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          const res = await jobFinderApi.getOrderStatus(orderId);
+          status = res.status;
+          retries++;
+        }
+        
+        if (status !== 'paid') {
+          throw new Error('Payment failed or was cancelled.');
+        }
       }
       
+      await refreshWallet();
+
       toast.success('Subscription started successfully!');
+      if (myPlan?.planId?.tier === 'free') {
+        setTimeout(() => {
+          toast.info('Upgrade to Pro for monthly bonus credits and a la carte discounts.');
+        }, 1500);
+      }
+
       clearCart();
       navigate('/dashboard/job-finder/subscriptions');
-    } catch {
-      toast.error('Checkout failed. Please try again.');
+    } catch (err) {
+      toast.error(err.message || 'Checkout failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -141,25 +168,23 @@ export default function CheckoutPage() {
               <div className="flex items-center gap-2 text-sm font-bold">
                 <AlertCircle className="h-5 w-5" /> Insufficient Credits
               </div>
-              <Link to="/dashboard/job-finder/wallet" className="pill-btn-secondary !py-1.5 !px-4 text-xs bg-white text-red-600 border-red-200">
-                TOP UP WALLET
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                {myPlan?.planId?.tier === 'free' && (
+                  <Link to="/dashboard/billing" className="pill-btn-secondary !py-1.5 !px-4 text-xs bg-white text-[var(--color-accent-blue)] border-[var(--color-accent-blue)]/30 hover:border-[var(--color-accent-blue)]">
+                    UPGRADE TO PRO (SAVE {discountPercent || 15}%)
+                  </Link>
+                )}
+                <Link to="/dashboard/job-finder/wallet" className="pill-btn-secondary !py-1.5 !px-4 text-xs bg-white text-red-600 border-red-200">
+                  TOP UP WALLET
+                </Link>
+              </div>
             </div>
           )}
 
           {paymentMethod === 'alacarte' && (
             <div className="bg-black/5 p-6 rounded-[24px] space-y-4 border border-black/10 animate-in fade-in slide-in-from-top-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-black/60">Card Information</label>
-                <input 
-                  type="text" 
-                  disabled
-                  className="w-full bg-white border border-black/10 rounded-[16px] px-4 py-3 font-medium cursor-not-allowed opacity-70"
-                  placeholder="•••• •••• •••• 4242"
-                />
-              </div>
-              <p className="text-xs text-black/40 font-bold uppercase italic text-center">
-                * Mock checkout environment *
+              <p className="text-sm font-medium text-black/80 text-center">
+                You will be redirected to our secure payment gateway to complete your purchase.
               </p>
             </div>
           )}
@@ -175,9 +200,15 @@ export default function CheckoutPage() {
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-black/60">
               <span>Items ({cart.length})</span>
               <span>
-                {paymentMethod === 'credits' ? `${totalCredits}c` : `$${totalCash}`}
+                {paymentMethod === 'credits' ? `${totalCredits}c` : `$${rawTotalCash.toFixed(2)}`}
               </span>
             </div>
+            {paymentMethod === 'alacarte' && discountPercent > 0 && (
+              <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-green-600">
+                <span>Pro Discount ({discountPercent}%)</span>
+                <span>-${(rawTotalCash * (discountPercent / 100)).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-black/60 border-b border-black/10 pb-4">
               <span>Taxes</span>
               <span>-</span>

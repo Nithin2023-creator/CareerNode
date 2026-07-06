@@ -11,9 +11,11 @@
     "server:install": "npm --prefix server install",
     "server:dev": "npm --prefix server run dev",
     "server:start": "npm --prefix server start",
-    "seed": "node server/seed/seedBundles.js"
+    "seed": "node server/seed/seedBundles.js",
+    "seed:membership": "node server/seed/seedMembershipPlans.js"
   },
   "dependencies": {
+    "@cashfreepayments/cashfree-js": "^1.0.7",
     "@react-oauth/google": "^0.13.5",
     "@xyflow/react": "^12.11.1",
     "framer-motion": "^12.42.2",

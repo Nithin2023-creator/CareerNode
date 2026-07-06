@@ -6,13 +6,17 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "seed": "node seed/seedBundles.js"
+    "seed": "node seed/seedBundles.js",
+    "seed:membership": "node seed/seedMembershipPlans.js",
+    "seed:admin": "node seed/seedAdmin.js",
+    "seed:companies": "node seed/seedCompanies.js"
   },
   "type": "commonjs",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
+    "cashfree-pg": "^6.0.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -22,6 +26,7 @@
     "mongoose": "^9.6.3",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.10",
-    "papaparse": "^5.5.3"
+    "papaparse": "^5.5.3",
+    "playwright": "^1.61.1"
   }
 }

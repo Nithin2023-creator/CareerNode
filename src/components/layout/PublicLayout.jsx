@@ -44,6 +44,12 @@ export default function PublicLayout() {
 
           {/* CTA */}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <Link 
+              to="/pricing"
+              className="text-xs sm:text-sm font-bold tracking-widest uppercase hover:text-[var(--color-accent-blue)] transition-colors hidden sm:block"
+            >
+              Pricing
+            </Link>
             <button 
               onClick={() => setIsLoginModalOpen(true)}
               className="text-xs sm:text-sm font-bold tracking-widest uppercase hover:text-[var(--color-accent-blue)] transition-colors"

@@ -6,6 +6,12 @@ import ColdMailerLayout from './components/layout/ColdMailerLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import PricingPage from './pages/PricingPage';
+import ContactPage from './pages/legal/ContactPage';
+import TermsPage from './pages/legal/TermsPage';
+import PrivacyPage from './pages/legal/PrivacyPage';
+import RefundPage from './pages/legal/RefundPage';
+import MembershipPage from './pages/billing/MembershipPage';
 import JobFinderLayout from './components/layout/JobFinderLayout';
 import ResumeMakerPage from './pages/ResumeMakerPage';
 import { CartProvider } from './pages/job-finder/CartContext';
@@ -15,6 +21,17 @@ import WalletPage from './pages/job-finder/WalletPage';
 import SubscriptionsPage from './pages/job-finder/SubscriptionsPage';
 import SubscriptionDetailPage from './pages/job-finder/SubscriptionDetailPage';
 import SettingsPage from './pages/job-finder/SettingsPage';
+import AdminRoute from './components/auth/AdminRoute';
+import AdminLayout from './components/layout/AdminLayout';
+import AdminOverviewPage from './pages/admin/AdminOverviewPage';
+import AdminCompaniesPage from './pages/admin/AdminCompaniesPage';
+import AdminBundlesPage from './pages/admin/AdminBundlesPage';
+import AdminCreditPacksPage from './pages/admin/AdminCreditPacksPage';
+import AdminMembershipPlansPage from './pages/admin/AdminMembershipPlansPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminWaitlistPage from './pages/admin/AdminWaitlistPage';
+import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import QuickDraftPage from './pages/cold-mailer/QuickDraftPage';
 import CampaignsListPage from './pages/cold-mailer/CampaignsListPage';
 import NewCampaignPage from './pages/cold-mailer/NewCampaignPage';
@@ -41,14 +58,33 @@ function App() {
           {/* Public Marketing Route */}
           <Route path="/" element={<PublicLayout />}>
             <Route index element={<LandingPage />} />
+            <Route path="pricing" element={<PricingPage />} />
+            <Route path="contact" element={<ContactPage />} />
+            <Route path="terms" element={<TermsPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="refund" element={<RefundPage />} />
           </Route>
           
           {/* Auth Route */}
           <Route path="/login" element={<LoginPage />} />
 
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<AdminOverviewPage />} />
+            <Route path="companies" element={<AdminCompaniesPage />} />
+            <Route path="bundles" element={<AdminBundlesPage />} />
+            <Route path="credit-packs" element={<AdminCreditPacksPage />} />
+            <Route path="membership-plans" element={<AdminMembershipPlansPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="waitlist" element={<AdminWaitlistPage />} />
+            <Route path="transactions" element={<AdminTransactionsPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
+          </Route>
+
         {/* Internal Dashboard Routes */}
         <Route path="/dashboard" element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="billing" element={<MembershipPage />} />
           {/* Job Finder section */}
           {/* Job Finder Pivot */}
           <Route path="job-finder" element={

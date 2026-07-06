@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, ArrowRight, X } from 'lucide-react';
 import { navItems } from '../../config/navItems';
+import UserMenu from './UserMenu';
 
 export default function MobileNavDrawer({ isOpen, onClose }) {
   return (
@@ -77,17 +78,8 @@ export default function MobileNavDrawer({ isOpen, onClose }) {
               ))}
             </nav>
             
-            {/* User Card */}
-            <div className="bg-white rounded-[24px] p-4 shadow-[var(--shadow-soft)] mt-auto">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-[12px] bg-[var(--color-accent-blue)] flex items-center justify-center text-white font-display font-bold text-lg shadow-[var(--shadow-soft)]">
-                  NF
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-black uppercase tracking-tight text-xs">New Fresher</span>
-                  <span className="text-[9px] text-black font-bold uppercase tracking-widest bg-[var(--color-accent-yellow)] px-2 py-0.5 rounded-full w-fit mt-1 shadow-sm">PRO PLAN</span>
-                </div>
-              </div>
+            <div className="mt-auto pt-4">
+              <UserMenu />
             </div>
           </motion.div>
         </>

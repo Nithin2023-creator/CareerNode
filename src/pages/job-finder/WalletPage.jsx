@@ -2,15 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Wallet, Coins, Plus, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { useCart } from './CartContext';
 import { mockCreditPacks } from './mockData';
-import { walletApi } from '../../lib/api';
+import { walletApi, membershipApi } from '../../lib/api';
 import { withMockFallback, formatDate } from './helpers';
+import { Link } from 'react-router-dom';
 import { useToast } from '../../lib/toast';
+import { openCashfreeCheckout } from '../../lib/cashfree';
 
 export default function WalletPage() {
   const { wallet, refreshWallet } = useCart();
   const toast = useToast();
   const [processingPackId, setProcessingPackId] = useState(null);
   const [packs, setPacks] = useState(mockCreditPacks);
+  const [myPlan, setMyPlan] = useState(null);
+
+  useEffect(() => {
+    membershipApi.getMe().then(res => setMyPlan(res)).catch(console.error);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -24,11 +31,28 @@ export default function WalletPage() {
   const handlePurchase = async (pack) => {
     setProcessingPackId(pack.id);
     try {
-      await walletApi.purchasePack(pack.id);
-      await refreshWallet();
-      toast.success(`Successfully added ${pack.credits} credits to your wallet.`);
-    } catch {
-      toast.error('Failed to purchase credits. Please try again.');
+      const { orderId, paymentSessionId } = await walletApi.purchasePack(pack._id || pack.id);
+      
+      await openCashfreeCheckout(paymentSessionId);
+      
+      let status = 'created';
+      let retries = 0;
+      while (status === 'created' && retries < 15) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const res = await walletApi.getOrderStatus(orderId);
+        status = res.status;
+        retries++;
+      }
+
+      if (status === 'paid') {
+        await refreshWallet();
+        toast.success(`Successfully added ${pack.credits} credits to your wallet.`);
+      } else {
+        toast.error('Payment failed or was cancelled.');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to initialize checkout. Please try again.');
     } finally {
       setProcessingPackId(null);
     }
@@ -55,6 +79,21 @@ export default function WalletPage() {
           <Coins className="h-16 w-16 text-[var(--color-accent-yellow)]" />
         </div>
       </div>
+
+      {/* Membership Upsell Banner */}
+      {myPlan?.planId?.tier === 'free' && (
+        <div className="bento-card bg-[var(--color-accent-blue)]/5 border-2 border-[var(--color-accent-blue)]/30 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div>
+            <h3 className="font-display font-bold text-xl text-[var(--color-accent-blue)]">Get more value with Pro</h3>
+            <p className="text-sm font-medium text-black/70 mt-1">
+              Subscribe to Pro for monthly bonus credits and {myPlan?.planId?.alaCarteDiscountPercent || 15}% off all a la carte purchases.
+            </p>
+          </div>
+          <Link to="/dashboard/billing" className="pill-btn shrink-0 bg-[var(--color-accent-blue)] text-white hover:bg-black whitespace-nowrap">
+            UPGRADE NOW
+          </Link>
+        </div>
+      )}
 
       {/* Credit Packs */}
       <div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, Filter, Store } from 'lucide-react';
 import { jobFinderApi } from '../../lib/api';
 import { withMockFallback, hasSeenJobFinderIntro, markJobFinderIntroSeen } from './helpers';
-import { mockCompanies, mockSubscriptions } from './mockData';
+import { mockSubscriptions } from './mockData';
 import CompanyProductCard from '../../components/job-finder/CompanyProductCard';
 import JobFinderIntro from '../../components/job-finder/JobFinderIntro';
 import { useIntroVisibility } from './IntroVisibilityContext';
@@ -24,7 +24,7 @@ export default function MarketplacePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const comps = await withMockFallback(jobFinderApi.listMarketplaceCompanies(), mockCompanies);
+        const comps = await jobFinderApi.listMarketplaceCompanies();
         const subs = await withMockFallback(jobFinderApi.listSubscriptions(), mockSubscriptions);
         setCompanies(comps || []);
         setSubscriptions(subs || []);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../../lib/api';
 
 export default function AuthForm({ onSuccess }) {
@@ -19,6 +19,17 @@ export default function AuthForm({ onSuccess }) {
   });
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const navigateAfterAuth = (user) => {
+    onSuccess?.();
+    const redirect = searchParams.get('redirect');
+    if (redirect && redirect.startsWith('/')) {
+      navigate(redirect);
+      return;
+    }
+    navigate(user?.isAdmin ? '/admin' : '/dashboard');
+  };
 
   const handleInputChange = (e) => {
     setFormData(prev => ({
@@ -35,8 +46,7 @@ export default function AuthForm({ onSuccess }) {
       localStorage.setItem('cn_token', data.token);
       localStorage.setItem('cn_user', JSON.stringify(data.user));
       
-      if (onSuccess) onSuccess();
-      else navigate('/dashboard');
+      navigateAfterAuth(data.user);
     } catch (err) {
       setError(err.message || 'Google login was unsuccessful.');
     } finally {
@@ -86,8 +96,7 @@ export default function AuthForm({ onSuccess }) {
       localStorage.setItem('cn_token', data.token);
       localStorage.setItem('cn_user', JSON.stringify(data.user));
       
-      if (onSuccess) onSuccess();
-      else navigate('/dashboard');
+      navigateAfterAuth(data.user);
     } catch (err) {
       setError(err.message || 'Authentication failed');
     } finally {
