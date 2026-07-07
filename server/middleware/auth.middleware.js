@@ -25,6 +25,29 @@ const requireAuth = async (req, res, next) => {
   }
 };
 
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_development';
+    
+    const decoded = jwt.verify(token, jwtSecret);
+    const user = await User.findById(decoded.userId).select('-passwordHash');
+    
+    if (user) {
+      req.user = user;
+    }
+    next();
+  } catch (error) {
+    // Ignore invalid tokens for optional auth
+    next();
+  }
+};
+
 const requireAdmin = async (req, res, next) => {
   // First ensure they are authenticated
   requireAuth(req, res, () => {
@@ -37,4 +60,4 @@ const requireAdmin = async (req, res, next) => {
   });
 };
 
-module.exports = { requireAuth, requireAdmin };
+module.exports = { requireAuth, requireAdmin, optionalAuth };

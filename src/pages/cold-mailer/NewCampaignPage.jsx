@@ -10,12 +10,17 @@ import {
   Rocket,
   Paperclip,
   Check,
-  Package
+  Package,
+  Mail,
+  PlugZap,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
-import { coldMailerApi, bundlesApi } from '../../lib/api.js';
+import { coldMailerApi, bundlesApi, gmailConnectionApi } from '../../lib/api.js';
 import { withMockFallback } from '../../lib/apiHelpers.js';
 import { useToast } from '../../lib/toast.jsx';
-import { STANDARD_FIELDS, TEMPLATE_TOKENS, standardizeRows, renderTemplate } from './helpers.js';
+import { useGmailAuth } from '../../lib/gmailAuth.js';
+import { STANDARD_FIELDS, TEMPLATE_TOKENS, standardizeRows, renderTemplate, isGmailReady, isGmailRevoked } from './helpers.js';
 
 export default function NewCampaignPage() {
   const toast = useToast();
@@ -44,12 +49,63 @@ export default function NewCampaignPage() {
   // Campaign State
   const [recipients, setRecipients] = useState([]);
   const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const [subject, setSubject] = useState(location.state?.subject || '');
+  const [body, setBody] = useState(location.state?.body || '');
   const [resumeFile, setResumeFile] = useState(null);
   const [coverLetterFile, setCoverLetterFile] = useState(null);
 
+  const [gmailConnection, setGmailConnection] = useState(null);
+  const [checkingGmail, setCheckingGmail] = useState(true);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
   const bodyRef = useRef(null);
+
+  useEffect(() => {
+    fetchGmailStatus();
+  }, []);
+
+  const fetchGmailStatus = async () => {
+    setCheckingGmail(true);
+    try {
+      const data = await gmailConnectionApi.getStatus();
+      setGmailConnection(data.email ? data : null);
+    } catch {
+      setGmailConnection(null);
+    } finally {
+      setCheckingGmail(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (codeResponse) => {
+    try {
+      setCheckingGmail(true);
+      const data = await gmailConnectionApi.connect(codeResponse.code);
+      setGmailConnection(data.email ? data : null);
+      toast.success('Gmail connected successfully.');
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setCheckingGmail(false);
+    }
+  };
+
+  const login = useGmailAuth(handleGoogleSuccess);
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    setTestResult(null);
+    try {
+      await gmailConnectionApi.testConnection();
+      setTestResult({ ok: true, message: 'SMTP connection successful.' });
+      toast.success('SMTP connection successful.');
+    } catch (err) {
+      setTestResult({ ok: false, message: err.message });
+      toast.error(err.message);
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   // Check router state for preselected bundle
   useEffect(() => {
@@ -94,7 +150,7 @@ export default function NewCampaignPage() {
       }
 
       setSourceType('bundle');
-      setStep('template');
+      setStep('connect');
     } catch {
       toast.error('Failed to load bundle recipients');
     } finally {
@@ -149,7 +205,7 @@ export default function NewCampaignPage() {
     }
     const std = buildRecipients();
     setRecipients(std);
-    setStep('template');
+    setStep('connect');
   };
 
   const handlePolish = async () => {
@@ -160,7 +216,7 @@ export default function NewCampaignPage() {
       const cleanedRows = cleaned.cleanedRows || cleaned;
       setRecipients(cleanedRows);
       toast.success('Data polished with AI.');
-      setStep('template');
+      setStep('connect');
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -225,13 +281,14 @@ export default function NewCampaignPage() {
   const getStepIndex = () => {
     if (step === 'source') return 0;
     if (step === 'map') return 1;
-    if (step === 'template') return sourceType === 'bundle' ? 1 : 2;
+    if (step === 'connect') return sourceType === 'bundle' ? 1 : 2;
+    if (step === 'template') return sourceType === 'bundle' ? 2 : 3;
     return 0;
   };
 
   const stepsList = sourceType === 'bundle' 
-    ? ['Choose Source', 'Template & Launch']
-    : ['Choose Source', 'Map & Clean', 'Template & Launch'];
+    ? ['Choose Source', 'Connect Gmail', 'Template & Launch']
+    : ['Choose Source', 'Map & Clean', 'Connect Gmail', 'Template & Launch'];
 
   const stepIndex = getStepIndex();
 
@@ -384,6 +441,102 @@ export default function NewCampaignPage() {
         </motion.div>
       )}
 
+      {/* Step X: Connect Gmail */}
+      {step === 'connect' && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <div className="bento-card p-6 md:p-8 bg-white max-w-2xl mx-auto">
+            <h3 className="font-display text-3xl font-bold uppercase mb-2 text-center">Gmail Connection</h3>
+            <p className="text-black/50 mb-8 text-center">
+              Verify your Gmail account is connected to send the campaign.
+            </p>
+
+            {checkingGmail ? (
+              <div className="space-y-3 mt-6">
+                {[0, 1].map((i) => (
+                  <div key={i} className="h-16 rounded-[20px] bg-black/[0.03] animate-pulse" />
+                ))}
+              </div>
+            ) : isGmailReady(gmailConnection) ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-[20px] bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="flex items-center gap-4 mb-4 md:mb-0">
+                    <div className="p-2 bg-emerald-500/20 rounded-[12px] shadow-sm">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-black/40">Connected Account</p>
+                      <p className="font-display font-bold text-lg text-emerald-900">{gmailConnection.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleTestConnection}
+                    disabled={testingConnection}
+                    className="pill-btn-secondary bg-white whitespace-nowrap text-sm px-4 py-2 disabled:opacity-50"
+                  >
+                    <PlugZap className="h-4 w-4 mr-2 inline-block" />
+                    {testingConnection ? 'TESTING...' : 'TEST CONNECTION'}
+                  </button>
+                </div>
+                {testResult && (
+                  <div
+                    className={`flex items-start gap-2 rounded-[16px] p-3 text-sm font-medium ${
+                      testResult.ok ? 'bg-emerald-500/10 text-emerald-700' : 'bg-red-500/10 text-red-700'
+                    }`}
+                  >
+                    {testResult.ok ? (
+                      <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    )}
+                    <span>{testResult.message}</span>
+                  </div>
+                )}
+              </div>
+            ) : isGmailRevoked(gmailConnection) ? (
+              <div className="p-8 rounded-[20px] bg-red-500/5 text-center border-2 border-dashed border-red-500/20 mb-6">
+                <XCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                <h4 className="font-display text-xl font-bold uppercase mb-2">Access Revoked</h4>
+                <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
+                  Google revoked CareerNode&apos;s permission to send on your behalf. Click below to reconnect.
+                </p>
+                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                  <PlugZap className="h-5 w-5" /> RECONNECT WITH GOOGLE
+                </button>
+              </div>
+            ) : (
+              <div className="p-8 rounded-[20px] bg-black/[0.03] text-center border-2 border-dashed border-black/10">
+                <Mail className="h-12 w-12 text-black/20 mx-auto mb-4" />
+                <h4 className="font-display text-xl font-bold uppercase mb-2">Not Connected</h4>
+                <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
+                  You need to authorize CareerNode to send emails on your behalf to launch campaigns.
+                </p>
+                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                  <PlugZap className="h-5 w-5" /> CONNECT WITH GOOGLE
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 max-w-2xl mx-auto">
+            <button 
+              onClick={() => {
+                if (sourceType === 'bundle') setStep('source');
+                else setStep('map');
+              }} 
+              className="pill-btn-secondary flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" /> BACK
+            </button>
+            <button
+              onClick={() => setStep('template')}
+              disabled={checkingGmail || !isGmailReady(gmailConnection)}
+              className="pill-btn flex items-center gap-2 disabled:opacity-50"
+            >
+              CONTINUE <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Step 2: Template & Launch */}
       {step === 'template' && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -499,10 +652,7 @@ export default function NewCampaignPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-4">
             <button 
-              onClick={() => {
-                if (sourceType === 'bundle') setStep('source');
-                else setStep('map');
-              }} 
+              onClick={() => setStep('connect')} 
               className="pill-btn-secondary flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" /> BACK

@@ -1,19 +1,20 @@
-const { Cashfree, CFEnvironment } = require('cashfree-pg');
+const { Cashfree: CashfreeSDK } = require('cashfree-pg');
 
-const cashfree = new Cashfree();
+const environment =
+  process.env.CASHFREE_ENV === 'PRODUCTION' ? CashfreeSDK.PRODUCTION : CashfreeSDK.SANDBOX;
 
-// Initialize the Cashfree environment
-cashfree.XClientId = process.env.CASHFREE_APP_ID;
-cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-cashfree.XEnvironment = process.env.CASHFREE_ENV === 'PRODUCTION' 
-  ? CFEnvironment.PRODUCTION 
-  : CFEnvironment.SANDBOX;
+const cashfree = new CashfreeSDK(
+  environment,
+  process.env.CASHFREE_APP_ID,
+  process.env.CASHFREE_SECRET_KEY
+);
 
 const verifyWebhookSignature = (signature, rawBody, timestamp) => {
   try {
-    return cashfree.PGVerifyWebhookSignature(signature, rawBody, timestamp);
+    CashfreeSDK.PGVerifyWebhookSignature(signature, rawBody, timestamp);
+    return true;
   } catch (error) {
-    console.error('Error verifying webhook signature:', error);
+    console.error('Error verifying webhook signature:', error.message);
     return false;
   }
 };

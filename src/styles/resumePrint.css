@@ -1,0 +1,59 @@
+/* ATS Resume Print Styles */
+
+@media print {
+  /* Hide EVERYTHING by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Reset body and hide background colors */
+  body {
+    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Show only the resume-preview area and its children */
+  #resume-preview,
+  #resume-preview * {
+    visibility: visible;
+  }
+
+  /* Position the preview absolutely at the top-left */
+  #resume-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0.5in; /* Standard ATS margin */
+    box-sizing: border-box;
+    /* ATS safe font stack */
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    color: #000 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Overwrite the neo-brutalist / tailwind classes if any bleed through */
+  #resume-preview * {
+    background-color: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Page margins setup for standard US Letter or A4 */
+  @page {
+    margin: 0.5in;
+  }
+
+  /* Prevent page breaks inside elements where possible */
+  .resume-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

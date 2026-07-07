@@ -49,7 +49,7 @@ export default function CompanyProductCard({ company, isSubscribed }) {
           </div>
           <div className="text-right">
             <span className="text-xs font-bold uppercase tracking-widest text-black/30 block mb-1">or</span>
-            <span className="font-bold text-black/50">${company.alaCartePrice}</span>
+            <span className="font-bold text-black/50">₹{company.alaCartePrice}</span>
           </div>
         </div>
 

@@ -13,7 +13,9 @@ import PrivacyPage from './pages/legal/PrivacyPage';
 import RefundPage from './pages/legal/RefundPage';
 import MembershipPage from './pages/billing/MembershipPage';
 import JobFinderLayout from './components/layout/JobFinderLayout';
-import ResumeMakerPage from './pages/ResumeMakerPage';
+import ResumeMakerHomePage from './pages/resume-maker/ResumeMakerHomePage';
+import ResumeBuilderPage from './pages/resume-maker/ResumeBuilderPage';
+import ResumeTailorPage from './pages/resume-maker/ResumeTailorPage';
 import { CartProvider } from './pages/job-finder/CartContext';
 import MarketplacePage from './pages/job-finder/MarketplacePage';
 import CheckoutPage from './pages/job-finder/CheckoutPage';
@@ -41,6 +43,7 @@ import HrMarketplacePage from './pages/cold-mailer/HrMarketplacePage';
 import BundleCheckoutPage from './pages/cold-mailer/BundleCheckoutPage';
 import MyBundlesPage from './pages/cold-mailer/MyBundlesPage';
 import { WalletProvider } from './context/WalletContext';
+import { PaywallProvider } from './context/PaywallContext';
 import WorkflowsListPage from './pages/automations/WorkflowsListPage';
 import WorkflowBuilderPage from './pages/automations/WorkflowBuilderPage';
 import ComingSoonPage from './pages/automations/ComingSoonPage';
@@ -54,6 +57,7 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter>
         <WalletProvider>
+          <PaywallProvider>
           <Routes>
           {/* Public Marketing Route */}
           <Route path="/" element={<PublicLayout />}>
@@ -99,7 +103,11 @@ function App() {
             <Route path="subscriptions/:id" element={<SubscriptionDetailPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
-          <Route path="resume-maker" element={<ResumeMakerPage />} />
+          <Route path="resume-maker">
+            <Route index element={<ResumeMakerHomePage />} />
+            <Route path="build" element={<ResumeBuilderPage />} />
+            <Route path="tailor" element={<ResumeTailorPage />} />
+          </Route>
 
           {/* Cold Mailer section */}
           <Route path="emailer" element={<ColdMailerLayout />}>
@@ -127,6 +135,7 @@ function App() {
           )}
         </Route>
         </Routes>
+          </PaywallProvider>
       </WalletProvider>
       </BrowserRouter>
     </GoogleOAuthProvider>

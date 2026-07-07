@@ -1,35 +1,55 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Server, Mail, Hash, User, PlugZap, CheckCircle2, XCircle } from 'lucide-react';
-import { coldMailerApi } from '../../lib/api.js';
+import { Mail, PlugZap, CheckCircle2, XCircle, LogOut } from 'lucide-react';
+import { gmailConnectionApi } from '../../lib/api.js';
+import { useGmailAuth } from '../../lib/gmailAuth.js';
 import { useToast } from '../../lib/toast.jsx';
+import { isGmailReady } from './helpers.js';
 
 export default function MailerSettingsPage() {
   const toast = useToast();
-  const [settings, setSettings] = useState(null);
+  const [connection, setConnection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState(null);
 
+  const fetchStatus = async () => {
+    try {
+      setLoading(true);
+      const data = await gmailConnectionApi.getStatus();
+      setConnection(data.email ? data : null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await coldMailerApi.getSmtpSettings();
-        setSettings(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    fetchStatus();
   }, []);
+
+  const handleGoogleSuccess = async (codeResponse) => {
+    try {
+      setLoading(true);
+      const data = await gmailConnectionApi.connect(codeResponse.code);
+      setConnection(data.email ? data : null);
+      toast.success('Gmail connected successfully.');
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = useGmailAuth(handleGoogleSuccess);
 
   const handleTest = async () => {
     setTesting(true);
     setResult(null);
     try {
-      await coldMailerApi.testSmtpConnection();
+      await gmailConnectionApi.testConnection();
       setResult({ ok: true, message: 'SMTP connection successful.' });
       toast.success('SMTP connection successful.');
     } catch (err) {
@@ -40,55 +60,109 @@ export default function MailerSettingsPage() {
     }
   };
 
-  const rows = settings
-    ? [
-        { icon: Mail, label: 'From Address', value: settings.email },
-        { icon: User, label: 'From Name', value: settings.fromName },
-        { icon: Server, label: 'SMTP Host', value: settings.host },
-        { icon: Hash, label: 'SMTP Port', value: settings.port },
-      ]
-    : [];
+  const handleDisconnect = async () => {
+    if (!window.confirm('Are you sure you want to disconnect your Gmail account?')) return;
+    try {
+      setLoading(true);
+      await gmailConnectionApi.disconnect();
+      setConnection(null);
+      toast.success('Gmail disconnected.');
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isActive = isGmailReady(connection);
+  const isRevoked = connection?.status === 'revoked';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-2">
-        <div className="bento-card p-6 md:p-8 bg-white">
-          <h3 className="font-display text-3xl font-bold uppercase mb-2">SMTP Configuration</h3>
-          <p className="text-black/50 mb-8">
-            These credentials are configured on the server (<span className="font-bold">server/.env</span>) and
-            shown here masked for safety.
-          </p>
-
-          {loading && (
-            <div className="space-y-3">
-              {[0, 1, 2, 3].map((i) => (
+        <div className="bento-card p-6 md:p-8 bg-white h-full">
+          <h3 className="font-display text-3xl font-bold uppercase mb-2">Gmail Connection</h3>
+          
+          {loading ? (
+            <div className="space-y-3 mt-6">
+              {[0, 1].map((i) => (
                 <div key={i} className="h-16 rounded-[20px] bg-black/[0.03] animate-pulse" />
               ))}
             </div>
-          )}
-
-          {error && !loading && <p className="text-red-600 font-medium">{error}</p>}
-
-          {settings && !loading && (
-            <div className="space-y-3">
-              {rows.map((row) => {
-                const Icon = row.icon;
-                return (
-                  <div
-                    key={row.label}
-                    className="flex items-center gap-4 p-4 rounded-[20px] bg-black/[0.03]"
-                  >
-                    <div className="p-2 bg-white rounded-[12px] shadow-sm">
-                      <Icon className="h-5 w-5 text-black" />
+          ) : error ? (
+            <p className="text-red-600 font-medium mt-6">{error}</p>
+          ) : isActive ? (
+            <>
+              <p className="text-black/50 mb-8">
+                Your Gmail account is connected and ready to send cold emails.
+              </p>
+              
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between p-4 rounded-[20px] bg-black/[0.03]">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-emerald-500/10 rounded-[12px] shadow-sm">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-widest text-black/40">{row.label}</p>
-                      <p className="font-display font-bold text-lg truncate">{row.value || '—'}</p>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-black/40">Connected Account</p>
+                      <p className="font-display font-bold text-lg">{connection.email}</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex items-center gap-2">
+                    <div className="px-3 py-1 rounded-full text-xs font-bold uppercase bg-emerald-500/10 text-emerald-600">
+                      active
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-4">
+                  <button onClick={handleDisconnect} className="pill-btn flex items-center justify-center gap-2 bg-black/[0.03] text-black hover:bg-red-500/10 hover:text-red-600 border border-black/10">
+                    <LogOut className="h-5 w-5" /> DISCONNECT GMAIL
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : isRevoked ? (
+            <>
+              <p className="text-black/50 mb-8">
+                Your Gmail access was revoked. Reconnect to resume sending campaigns.
+              </p>
+
+              <div className="p-8 rounded-[20px] bg-red-500/5 text-center border-2 border-dashed border-red-500/20 mb-6">
+                <XCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                <h4 className="font-display text-xl font-bold uppercase mb-2">Access Revoked</h4>
+                <p className="text-sm text-black/50 max-w-md mx-auto mb-2">
+                  {connection.email}
+                </p>
+                <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
+                  Google revoked CareerNode&apos;s permission to send on your behalf. Click below to reconnect.
+                </p>
+                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                  <PlugZap className="h-5 w-5" /> RECONNECT WITH GOOGLE
+                </button>
+              </div>
+
+              <button onClick={handleDisconnect} className="pill-btn flex items-center justify-center gap-2 bg-black/[0.03] text-black hover:bg-red-500/10 hover:text-red-600 border border-black/10">
+                <LogOut className="h-5 w-5" /> REMOVE ACCOUNT
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-black/50 mb-8">
+                Connect your Gmail account to send cold emails securely via OAuth — no app passwords needed.
+              </p>
+              
+              <div className="p-8 rounded-[20px] bg-black/[0.03] text-center border-2 border-dashed border-black/10">
+                <Mail className="h-12 w-12 text-black/20 mx-auto mb-4" />
+                <h4 className="font-display text-xl font-bold uppercase mb-2">Not Connected</h4>
+                <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
+                  You need to authorize CareerNode to send emails on your behalf to launch campaigns.
+                </p>
+                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                  <PlugZap className="h-5 w-5" /> CONNECT WITH GOOGLE
+                </button>
+              </div>
+            </>
           )}
         </div>
       </motion.div>
@@ -105,7 +179,7 @@ export default function MailerSettingsPage() {
           </div>
           <h3 className="font-display text-2xl font-bold uppercase mb-2">Test Connection</h3>
           <p className="text-black/50 text-sm mb-6">
-            Verify the server can authenticate with your mail provider before launching a campaign.
+            Verify the server can authenticate with your Gmail account before launching a campaign.
           </p>
 
           {result && (
@@ -125,7 +199,7 @@ export default function MailerSettingsPage() {
 
           <button
             onClick={handleTest}
-            disabled={testing}
+            disabled={testing || !isActive}
             className="pill-btn mt-auto flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <PlugZap className="h-5 w-5" /> {testing ? 'TESTING…' : 'TEST CONNECTION'}

@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../config/multer');
 const controller = require('../controllers/campaigns.controller');
+const { requireAuth } = require('../middleware/auth.middleware');
+
+router.use(requireAuth);
 
 router.get('/', controller.listCampaigns);
 

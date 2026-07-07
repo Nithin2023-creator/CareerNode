@@ -12,9 +12,9 @@ import {
   Plus,
   ArrowUpRight,
 } from 'lucide-react';
-import { coldMailerApi } from '../../lib/api.js';
+import { coldMailerApi, gmailConnectionApi } from '../../lib/api.js';
 import { useToast } from '../../lib/toast.jsx';
-import { CAMPAIGN_STATUS_STYLES, computeStats, formatDate } from './helpers.js';
+import { CAMPAIGN_STATUS_STYLES, computeStats, formatDate, isGmailReady, isGmailRevoked } from './helpers.js';
 
 export default function CampaignsListPage() {
   const toast = useToast();
@@ -22,14 +22,19 @@ export default function CampaignsListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [gmailStatus, setGmailStatus] = useState(null);
   const pollRef = useRef(null);
 
   const load = useCallback(
     async ({ silent } = {}) => {
       if (!silent) setLoading(true);
       try {
-        const data = await coldMailerApi.listCampaigns();
+        const [data, gStatus] = await Promise.all([
+          coldMailerApi.listCampaigns(),
+          gmailConnectionApi.getStatus()
+        ]);
         setCampaigns(data || []);
+        if (!silent) setGmailStatus(gStatus);
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -131,7 +136,21 @@ export default function CampaignsListPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-6">
+      {!loading && gmailStatus && !isGmailReady(gmailStatus) && (
+        <div className="rounded-[16px] bg-red-500/10 p-4 text-sm text-red-700 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>
+            {isGmailRevoked(gmailStatus)
+              ? 'Your Gmail access was revoked. Reconnect to launch campaigns.'
+              : 'You must connect your Gmail account before launching campaigns.'}
+          </span>
+          <Link to="/dashboard/emailer/settings" className="pill-btn-secondary !bg-red-500/10 hover:!bg-red-500/20 !text-red-700 border-none !py-2 !px-4 shrink-0 text-center">
+            CONNECT GMAIL
+          </Link>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {campaigns.map((campaign, idx) => {
         const stats = computeStats(campaign.recipients);
         const isBusy = busyId === campaign._id;
@@ -193,7 +212,7 @@ export default function CampaignsListPage() {
                 campaign.status === 'Paused' ||
                 campaign.status === 'Stopped') && (
                 <button
-                  disabled={isBusy}
+                  disabled={isBusy || !isGmailReady(gmailStatus)}
                   onClick={() =>
                     runAction(
                       campaign._id,
@@ -202,6 +221,7 @@ export default function CampaignsListPage() {
                     )
                   }
                   className="pill-btn !px-4 !py-2 text-sm flex items-center gap-1.5 disabled:opacity-50"
+                  title={!isGmailReady(gmailStatus) ? (isGmailRevoked(gmailStatus) ? 'Reconnect Gmail first' : 'Connect Gmail first') : ''}
                 >
                   <Play className="h-4 w-4" /> {campaign.status === 'Draft' ? 'LAUNCH' : 'RESUME'}
                 </button>
@@ -250,6 +270,7 @@ export default function CampaignsListPage() {
           </motion.div>
         );
       })}
+      </div>
     </div>
   );
 }

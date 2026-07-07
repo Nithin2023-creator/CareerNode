@@ -11,10 +11,10 @@ import {
   Paperclip,
   Trash2,
 } from 'lucide-react';
-import { coldMailerApi, uploadUrl } from '../../lib/api.js';
+import { coldMailerApi, gmailConnectionApi, uploadUrl } from '../../lib/api.js';
 import { useToast } from '../../lib/toast.jsx';
 import { isMobileViewport } from '../../lib/viewport.js';
-import { CAMPAIGN_STATUS_STYLES, RECIPIENT_STATUS_STYLES, computeStats, formatDate } from './helpers.js';
+import { CAMPAIGN_STATUS_STYLES, RECIPIENT_STATUS_STYLES, computeStats, formatDate, isGmailReady, isGmailRevoked } from './helpers.js';
 
 const STAT_TILES = [
   { key: 'sent', label: 'Sent', color: 'text-emerald-600' },
@@ -32,6 +32,7 @@ export default function CampaignDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [gmailStatus, setGmailStatus] = useState(null);
   const [selected, setSelected] = useState(null);
   const pollRef = useRef(null);
   const previewRef = useRef(null);
@@ -49,8 +50,12 @@ export default function CampaignDetailPage() {
     async ({ silent } = {}) => {
       if (!silent) setLoading(true);
       try {
-        const data = await coldMailerApi.getCampaign(id);
+        const [data, gStatus] = await Promise.all([
+          coldMailerApi.getCampaign(id),
+          gmailConnectionApi.getStatus()
+        ]);
         setCampaign(data);
+        setGmailStatus(gStatus);
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -151,6 +156,19 @@ export default function CampaignDetailPage() {
         <ArrowLeft className="h-4 w-4" /> All Campaigns
       </Link>
 
+      {!loading && gmailStatus && !isGmailReady(gmailStatus) && canLaunch && (
+        <div className="rounded-[16px] bg-red-500/10 p-4 text-sm text-red-700 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>
+            {isGmailRevoked(gmailStatus)
+              ? 'Your Gmail access was revoked. Reconnect to launch this campaign.'
+              : 'You must connect your Gmail account before launching this campaign.'}
+          </span>
+          <Link to="/dashboard/emailer/settings" className="pill-btn-secondary !bg-red-500/10 hover:!bg-red-500/20 !text-red-700 border-none !py-2 !px-4 shrink-0 text-center">
+            CONNECT GMAIL
+          </Link>
+        </div>
+      )}
+
       {/* Header + actions */}
       <div className="bento-card p-6 md:p-8 bg-white">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -167,9 +185,10 @@ export default function CampaignDetailPage() {
           <div className="flex flex-wrap gap-2">
             {canLaunch && (
               <button
-                disabled={busy}
+                disabled={busy || !isGmailReady(gmailStatus)}
                 onClick={() => runAction(campaign.status === 'Draft' ? 'send' : 'resume', campaign.status === 'Draft' ? 'Launch' : 'Resume')}
                 className="pill-btn !px-5 !py-2.5 text-sm flex items-center gap-1.5 disabled:opacity-50"
+                title={!isGmailReady(gmailStatus) ? (isGmailRevoked(gmailStatus) ? 'Reconnect Gmail first' : 'Connect Gmail first') : ''}
               >
                 <Play className="h-4 w-4" /> {campaign.status === 'Draft' ? 'LAUNCH' : 'RESUME'}
               </button>

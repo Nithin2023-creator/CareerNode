@@ -7,7 +7,10 @@ const httpError = require('http-errors');
 
 exports.listBundles = async (userId) => {
   const bundles = await Bundle.find().select('-recipients').lean();
-  const purchases = await BundlePurchase.find({ userId }).select('bundleId').lean();
+  let purchases = [];
+  if (userId) {
+    purchases = await BundlePurchase.find({ userId }).select('bundleId').lean();
+  }
 
   const purchasedIds = new Set(purchases.map((p) => p.bundleId.toString()));
 

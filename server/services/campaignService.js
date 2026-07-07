@@ -1,7 +1,7 @@
 const Campaign = require('../models/Campaign');
+const GmailConnection = require('../models/GmailConnection');
 const emailService = require('./emailService');
 const emailValidator = require('./emailValidator');
-const { verifyConnection } = require('../config/smtp');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -48,7 +48,7 @@ const applyAbortState = async (campaign, campaignId, index, reason) => {
 /**
  * Runs the two-phase send pipeline (validate, then send) in the background.
  */
-const processEmails = async (campaign, campaignId) => {
+const processEmails = async (campaign, campaignId, connection) => {
   // Phase 1: validate all pending email addresses.
   for (let i = 0; i < campaign.recipients.length; i++) {
     const signal = activeCampaigns.get(campaignId.toString());
@@ -89,6 +89,7 @@ const processEmails = async (campaign, campaignId) => {
       to: recipient.email,
       subject: personalizedSubject,
       body: personalizedBody,
+      connection,
       resumeUrl: campaign.resumeUrl,
       coverLetterUrl: campaign.coverLetterUrl,
     });
@@ -96,7 +97,19 @@ const processEmails = async (campaign, campaignId) => {
     if (result.success) {
       recipient.status = 'Sent';
       recipient.sentAt = new Date();
+      connection.lastUsedAt = new Date();
+      await connection.save();
     } else {
+      if (result.error && result.error.includes('invalid_grant')) {
+        connection.status = 'revoked';
+        await connection.save();
+        recipient.status = 'Failed';
+        recipient.failReason = 'Gmail connection revoked. Please reconnect.';
+        campaign.lastProcessedIndex = i;
+        await campaign.save();
+        await applyAbortState(campaign, campaignId, i, 'revoked');
+        return;
+      }
       recipient.status = 'Failed';
       recipient.failReason = result.error;
     }
@@ -130,23 +143,23 @@ const processEmails = async (campaign, campaignId) => {
 };
 
 const campaignService = {
-  async listCampaigns() {
-    return Campaign.find().sort({ createdAt: -1 });
+  async listCampaigns(userId) {
+    return Campaign.find({ userId }).sort({ createdAt: -1 });
   },
 
-  async getCampaign(id) {
-    const campaign = await Campaign.findById(id);
+  async getCampaign(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     return campaign;
   },
 
-  async getCampaignStatus(id) {
-    const campaign = await Campaign.findById(id).select('status recipients');
+  async getCampaignStatus(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId }).select('status recipients');
     if (!campaign) throw httpError(404, 'Campaign not found');
     return { status: campaign.status, recipients: campaign.recipients };
   },
 
-  async createCampaign({ title, templateSubject, templateBody, recipients, resumeUrl, coverLetterUrl }) {
+  async createCampaign({ userId, title, templateSubject, templateBody, recipients, resumeUrl, coverLetterUrl }) {
     let parsedRecipients = [];
     if (typeof recipients === 'string') {
       parsedRecipients = JSON.parse(recipients);
@@ -175,6 +188,7 @@ const campaignService = {
     }
 
     const campaign = new Campaign({
+      userId,
       title,
       templateSubject,
       templateBody,
@@ -186,8 +200,8 @@ const campaignService = {
     return campaign.save();
   },
 
-  async updateCampaign(id, { title, templateSubject, templateBody }) {
-    const campaign = await Campaign.findById(id);
+  async updateCampaign(userId, id, { title, templateSubject, templateBody }) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status !== 'Draft') {
       throw httpError(400, 'Only draft campaigns can be edited');
@@ -200,8 +214,8 @@ const campaignService = {
     return campaign.save();
   },
 
-  async deleteCampaign(id) {
-    const campaign = await Campaign.findById(id);
+  async deleteCampaign(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status === 'Sending') {
       throw httpError(400, 'Cannot delete a campaign while it is sending');
@@ -214,22 +228,25 @@ const campaignService = {
    * Verify SMTP, flip status to Sending, and kick off background processing.
    * Returns the campaign document immediately (send runs asynchronously).
    */
-  async startCampaign(id) {
-    const campaign = await Campaign.findById(id);
+  async startCampaign(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status === 'Sending') throw httpError(400, 'Campaign is already sending');
     if (campaign.status === 'Completed') throw httpError(400, 'Campaign is already completed');
 
-    const isConnected = await verifyConnection();
-    if (!isConnected) {
-      throw httpError(500, 'SMTP connection failed. Check your SMTP settings.');
+    const connection = await GmailConnection.findOne({ userId, status: 'active' });
+    if (!connection) {
+      throw httpError(
+        400,
+        'Gmail is not connected. Please connect your Gmail account in Mailer Settings.'
+      );
     }
 
     activeCampaigns.set(id.toString(), { aborted: false, reason: null });
     campaign.status = 'Sending';
     await campaign.save();
 
-    processEmails(campaign, id).catch((err) => {
+    processEmails(campaign, id, connection).catch((err) => {
       console.error('Background email processing error:', err);
       campaign.status = 'Partially Failed';
       campaign.save().catch(() => {});
@@ -239,8 +256,8 @@ const campaignService = {
     return campaign;
   },
 
-  async pauseCampaign(id) {
-    const campaign = await Campaign.findById(id);
+  async pauseCampaign(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status !== 'Sending') {
       throw httpError(400, 'Campaign is not currently sending');
@@ -252,8 +269,8 @@ const campaignService = {
     return campaign.save();
   },
 
-  async stopCampaign(id) {
-    const campaign = await Campaign.findById(id);
+  async stopCampaign(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status !== 'Sending' && campaign.status !== 'Paused') {
       throw httpError(400, 'Campaign is not active or paused');
@@ -267,8 +284,8 @@ const campaignService = {
     return campaign.save();
   },
 
-  async resumeCampaign(id, startFromIndex) {
-    const campaign = await Campaign.findById(id);
+  async resumeCampaign(userId, id, startFromIndex) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status !== 'Paused' && campaign.status !== 'Stopped') {
       throw httpError(400, 'Only paused or stopped campaigns can be resumed');
@@ -289,11 +306,11 @@ const campaignService = {
       }
     }
 
-    return this.startCampaign(id);
+    return this.startCampaign(userId, id);
   },
 
-  async resetCampaign(id) {
-    const campaign = await Campaign.findById(id);
+  async resetCampaign(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status === 'Sending') {
       throw httpError(400, 'Cannot reset while sending');
@@ -308,8 +325,8 @@ const campaignService = {
     return campaign.save();
   },
 
-  async retryFailed(id) {
-    const campaign = await Campaign.findById(id);
+  async retryFailed(userId, id) {
+    const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status === 'Sending') {
       throw httpError(400, 'Cannot retry while sending');

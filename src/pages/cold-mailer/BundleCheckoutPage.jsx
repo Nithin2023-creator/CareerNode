@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useBundleCart } from './BundleCartContext';
 import { useWallet } from '../../context/WalletContext';
 import { bundlesApi, membershipApi } from '../../lib/api';
-import { CreditCard, Coins, ArrowRight, ShieldCheck, Tag } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { openCashfreeCheckout } from '../../lib/cashfree';
+import { openCashfreeCheckout, pollOrderStatus } from '../../lib/cashfree';
+import PaymentOptions from '../../components/payments/PaymentOptions';
+import { ensureCreditsForAction, getCreditsConfirmLabel } from '../../lib/creditPacks';
 
 export default function BundleCheckoutPage() {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ export default function BundleCheckoutPage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [myPlan, setMyPlan] = useState(null);
+  const [selectedPack, setSelectedPack] = useState(null);
 
   React.useEffect(() => {
     membershipApi.getMe().then(res => setMyPlan(res)).catch(console.error);
@@ -26,47 +29,35 @@ export default function BundleCheckoutPage() {
   const discountPercent = myPlan?.planId?.alaCarteDiscountPercent || 0;
   const totalAlaCarte = (rawTotalAlaCarte * (1 - discountPercent / 100)).toFixed(2);
   
-  const shortfall = Math.max(0, totalCredits - (wallet?.balance || 0));
-  const canUseCredits = shortfall === 0;
-
-  // Auto-switch to alacarte if they don't have enough credits
-  React.useEffect(() => {
-    if (!canUseCredits && paymentMethod === 'credits') {
-      setPaymentMethod('alacarte');
-    }
-  }, [canUseCredits, paymentMethod]);
-
-  if (cart.length === 0) {
-    return (
-      <div className="max-w-3xl mx-auto py-24 text-center">
-        <h2 className="font-display text-4xl font-bold uppercase mb-4">Cart is empty</h2>
-        <button onClick={() => navigate('/dashboard/emailer/marketplace')} className="bento-button bg-black text-white">
-          Back to Marketplace
-        </button>
-      </div>
-    );
-  }
+  const canUseCredits = (wallet?.balance || 0) >= totalCredits;
 
   const handleCheckout = async () => {
+    if (paymentMethod === 'credits' && !canUseCredits && !selectedPack) {
+      setError('Please select a credit pack to continue.');
+      return;
+    }
+
     setProcessing(true);
     setError(null);
     try {
+      if (paymentMethod === 'credits') {
+        await ensureCreditsForAction({
+          balance: wallet?.balance || 0,
+          creditCost: totalCredits,
+          selectedPack,
+          refreshWallet,
+        });
+      }
+
       for (const bundle of cart) {
         if (paymentMethod === 'credits') {
           await bundlesApi.purchaseBundle(bundle._id, paymentMethod);
         } else {
           const { orderId, paymentSessionId } = await bundlesApi.purchaseBundle(bundle._id, paymentMethod);
           await openCashfreeCheckout(paymentSessionId);
-          
-          let status = 'created';
-          let retries = 0;
-          while (status === 'created' && retries < 15) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            const res = await bundlesApi.getOrderStatus(orderId);
-            status = res.status;
-            retries++;
-          }
-          
+
+          const status = await pollOrderStatus((id) => bundlesApi.getOrderStatus(id), orderId);
+
           if (status !== 'paid') {
             throw new Error('Payment failed or was cancelled for ' + bundle.name);
           }
@@ -82,6 +73,17 @@ export default function BundleCheckoutPage() {
       setProcessing(false);
     }
   };
+
+  if (cart.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto py-24 text-center">
+        <h2 className="font-display text-4xl font-bold uppercase mb-4">Cart is empty</h2>
+        <button onClick={() => navigate('/dashboard/emailer/marketplace')} className="bento-button bg-black text-white">
+          Back to Marketplace
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto pb-24">
@@ -122,71 +124,24 @@ export default function BundleCheckoutPage() {
             <h2 className="font-display text-2xl font-bold uppercase mb-6">Payment Method</h2>
             
             <div className="space-y-4 mb-8">
-              {/* Pay with Credits */}
-              <label className={`
-                relative flex items-start p-4 rounded-2xl cursor-pointer border-2 transition-all
-                ${paymentMethod === 'credits' ? 'border-black bg-black/5' : 'border-black/10 hover:border-black/30'}
-                ${!canUseCredits ? 'opacity-50 cursor-not-allowed' : ''}
-              `}>
-                <input 
-                  type="radio" 
-                  name="payment" 
-                  value="credits"
-                  checked={paymentMethod === 'credits'}
-                  onChange={(e) => canUseCredits && setPaymentMethod(e.target.value)}
-                  className="mt-1 mr-3"
-                  disabled={!canUseCredits}
-                />
-                <div className="flex-1">
-                  <div className="font-bold text-lg flex items-center">
-                    <Coins className="w-5 h-5 mr-2 text-[var(--color-accent-yellow)]" />
-                    Pay with Credits
-                  </div>
-                  <div className="text-sm text-black/60 mt-1">
-                    Balance: <span className="font-bold text-black">{wallet?.balance || 0}</span> cr
-                  </div>
-                  {!canUseCredits && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl space-y-2">
-                      <div className="text-xs text-red-600 font-bold uppercase tracking-wider flex justify-between">
-                        <span>Shortfall</span>
-                        <span>{shortfall} cr</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {myPlan?.planId?.tier === 'free' && (
-                          <Link to="/dashboard/billing" className="text-xs px-3 py-1.5 rounded-lg bg-white border border-[var(--color-accent-blue)] text-[var(--color-accent-blue)] font-bold hover:bg-[var(--color-accent-blue)] hover:text-white transition-colors">
-                            UPGRADE TO PRO
-                          </Link>
-                        )}
-                        <Link to="/dashboard/emailer/marketplace" className="text-xs px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 font-bold hover:bg-red-50 transition-colors">
-                          TOP UP WALLET
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </label>
+              <PaymentOptions
+                creditCost={totalCredits}
+                cashPrice={totalAlaCarte}
+                balance={wallet?.balance || 0}
+                method={paymentMethod}
+                onMethodChange={setPaymentMethod}
+                onSelectedPackChange={setSelectedPack}
+                creditsHint="Deduct from your wallet balance"
+              />
 
-              {/* Pay with Card */}
-              <label className={`
-                relative flex items-start p-4 rounded-2xl cursor-pointer border-2 transition-all
-                ${paymentMethod === 'alacarte' ? 'border-black bg-black/5' : 'border-black/10 hover:border-black/30'}
-              `}>
-                <input 
-                  type="radio" 
-                  name="payment" 
-                  value="alacarte"
-                  checked={paymentMethod === 'alacarte'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="mt-1 mr-3"
-                />
-                <div className="flex-1">
-                  <div className="font-bold text-lg flex items-center">
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    Credit Card
-                  </div>
-                  <div className="text-sm text-black/60 mt-1">One-time payment</div>
-                </div>
-              </label>
+              {!canUseCredits && paymentMethod === 'credits' && myPlan?.planId?.tier === 'free' && (
+                <Link
+                  to="/dashboard/billing"
+                  className="block text-center text-xs px-3 py-2 rounded-lg bg-white border border-[var(--color-accent-blue)] text-[var(--color-accent-blue)] font-bold hover:bg-[var(--color-accent-blue)] hover:text-white transition-colors"
+                >
+                  UPGRADE TO PRO FOR {discountPercent || 15}% OFF
+                </Link>
+              )}
             </div>
 
             <div className="border-t border-black/10 pt-6 mb-8 space-y-2">
@@ -216,16 +171,27 @@ export default function BundleCheckoutPage() {
 
             <button 
               onClick={handleCheckout}
-              disabled={processing || (paymentMethod === 'credits' && !canUseCredits)}
+              disabled={
+                processing ||
+                (paymentMethod === 'credits' && !canUseCredits && !selectedPack)
+              }
               className="bento-button w-full justify-between bg-[var(--color-accent-yellow)] text-black hover:bg-[var(--color-accent-yellow)]/90 py-5 text-xl disabled:opacity-50"
             >
               <span className="flex items-center">
                 <ShieldCheck className="mr-2 h-6 w-6" />
-                {processing ? 'Processing...' : 'Complete Purchase'}
+                {processing
+                  ? 'Processing...'
+                  : paymentMethod === 'alacarte'
+                    ? 'Complete Purchase'
+                    : getCreditsConfirmLabel({
+                        hasEnoughCredits: canUseCredits,
+                        selectedPack,
+                        creditCost: totalCredits,
+                      })}
               </span>
               {!processing && <ArrowRight />}
             </button>
-            <p className="text-center text-xs text-black/40 mt-4 font-medium">Secure mock payment processing</p>
+            <p className="text-center text-xs text-black/40 mt-4 font-medium">Secure payment via Cashfree</p>
           </div>
         </div>
       </div>

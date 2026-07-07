@@ -14,7 +14,7 @@ const paymentOrderSchema = new mongoose.Schema({
   },
   orderType: {
     type: String,
-    enum: ['wallet_topup', 'bundle', 'job_finder_checkout'],
+    enum: ['wallet_topup', 'bundle', 'job_finder_checkout', 'credit_action'],
     required: true,
   },
   referenceId: {
@@ -29,7 +29,7 @@ const paymentOrderSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    default: 'USD',
+    default: 'INR',
   },
   status: {
     type: String,
@@ -37,6 +37,11 @@ const paymentOrderSchema = new mongoose.Schema({
     default: 'created',
   },
   fulfilledAt: {
+    type: Date,
+  },
+  // Set when a paid a la carte `credit_action` order is redeemed by the gated
+  // action, so the same paid order cannot be consumed twice.
+  consumedAt: {
     type: Date,
   },
 }, { timestamps: true });

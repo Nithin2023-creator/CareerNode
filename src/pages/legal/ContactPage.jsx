@@ -38,7 +38,7 @@ export default function ContactPage() {
           <MapPin className="h-6 w-6 text-black mt-1" />
           <div>
             <h3 className="font-bold uppercase tracking-widest mb-1">Headquarters</h3>
-            <p className="text-black/60 font-medium">123 CareerNode Blvd, Suite 400<br/>San Francisco, CA 94105</p>
+            <p className="text-black/60 font-medium">All India Vellama Association Bhavan<br/>Himayath Nagar, Hyderabad<br/>Telangana 500027, India</p>
           </div>
         </div>
       </div>

@@ -29,6 +29,11 @@ const userMembershipSchema = new mongoose.Schema({
     default: null,
     index: true,
   },
+  pendingPlanId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'MembershipPlan',
+    default: null,
+  },
   lastPaymentId: {
     type: String, // For webhook idempotency
     default: null,

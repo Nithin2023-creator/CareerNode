@@ -25,7 +25,7 @@ async function seed() {
     await MembershipPlan.create({
       name: 'Pro',
       tier: 'pro',
-      monthlyPrice: 15,
+      monthlyPrice: 999,
       monthlyBonusCredits: 50,
       alaCarteDiscountPercent: 15,
       perks: ['50 monthly credits', '15% discount', 'Priority support'],

@@ -122,16 +122,27 @@ exports.checkout = async (user, cartItems, paymentMethod) => {
     }
     return { subscriptions: created };
   } else if (paymentMethod === 'alacarte') {
+    const enrichedCart = cartItems.map((item) => {
+      const company = companyMap.get(String(item.id || item._id));
+      const pricePaid = company
+        ? company.alaCartePrice * (1 - discountPercent / 100)
+        : 0;
+      return {
+        companyId: item.id || item._id,
+        pricePaid: Math.round(pricePaid * 100) / 100,
+      };
+    });
+
     const { orderId, paymentSessionId } = await paymentService.createOrder({
       userId,
       amount: totalCash,
       orderType: 'job_finder_checkout',
-      referenceId: 'cart', // generic reference
-      cartItems, // store items for webhook
+      referenceId: 'cart',
+      cartItems: enrichedCart,
       customerDetails: {
         name: user.name,
-        email: user.email
-      }
+        email: user.email,
+      },
     });
     return { orderId, paymentSessionId };
   } else {

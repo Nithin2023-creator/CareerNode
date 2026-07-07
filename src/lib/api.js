@@ -78,9 +78,13 @@ export const coldMailerApi = {
 
   importCsv: (formData) => api.postForm('/csv-imports', formData),
   cleanRows: (rows) => api.postJson('/csv-imports/clean-rows', { rows }),
+};
 
-  getSmtpSettings: () => api.get('/smtp-settings'),
-  testSmtpConnection: () => api.postJson('/smtp-settings/test-connection', {}),
+export const gmailConnectionApi = {
+  getStatus: () => api.get('/gmail-connection'),
+  connect: (code) => api.postJson('/gmail-connection', { code }),
+  disconnect: () => api.del('/gmail-connection'),
+  testConnection: () => api.postJson('/gmail-connection/test', {}),
 };
 
 // Wallet endpoints on the main backend
@@ -171,4 +175,22 @@ export const adminApi = {
   createMembershipPlan: (body) => api.postJson('/admin/membership-plans', body),
   updateMembershipPlan: (id, body) => api.patchJson(`/admin/membership-plans/${id}`, body),
   deleteMembershipPlan: (id) => api.del(`/admin/membership-plans/${id}`),
+};
+
+// Resume Maker Endpoints
+export const resumeApi = {
+  list: () => api.get('/resumes'),
+  get: (id) => api.get(`/resumes/${id}`),
+  create: (body) => api.postJson('/resumes', body),
+  update: (id, body) => api.put(`/resumes/${id}`, body),
+  remove: (id) => api.del(`/resumes/${id}`),
+  tailor: (formData) => api.postForm('/resumes/tailor', formData),
+  score: (body) => api.postJson('/resumes/score', body),
+  export: (body) => api.postJson('/resumes/exports', body),
+};
+
+// Unified pricing / paywall endpoints for flat-priced credit actions
+export const pricingApi = {
+  getCatalog: () => api.get('/pricing'),
+  checkoutAction: (actionId) => api.postJson(`/pricing/${actionId}/checkout`, {}),
 };

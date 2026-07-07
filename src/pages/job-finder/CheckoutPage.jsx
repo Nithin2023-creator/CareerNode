@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { CreditCard, Coins, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useCart } from './CartContext';
 import { jobFinderApi, membershipApi } from '../../lib/api';
 import { useToast } from '../../lib/toast';
-import { openCashfreeCheckout } from '../../lib/cashfree';
+import { openCashfreeCheckout, pollOrderStatus } from '../../lib/cashfree';
+import PaymentOptions from '../../components/payments/PaymentOptions';
+import { ensureCreditsForAction, getCreditsConfirmLabel } from '../../lib/creditPacks';
 
 export default function CheckoutPage() {
   const { cart, wallet, clearCart, refreshWallet } = useCart();
@@ -14,6 +16,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('credits');
   const [isProcessing, setIsProcessing] = useState(false);
   const [myPlan, setMyPlan] = useState(null);
+  const [selectedPack, setSelectedPack] = useState(null);
 
   React.useEffect(() => {
     membershipApi.getMe().then(res => setMyPlan(res)).catch(console.error);
@@ -29,28 +32,27 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     if (cart.length === 0) return;
 
-    if (paymentMethod === 'credits' && !hasEnoughCredits) {
-      toast.error('Insufficient credits. Please top up your wallet.');
+    if (paymentMethod === 'credits' && !hasEnoughCredits && !selectedPack) {
+      toast.error('Please select a credit pack to continue.');
       return;
     }
 
     setIsProcessing(true);
     try {
       if (paymentMethod === 'credits') {
+        await ensureCreditsForAction({
+          balance: wallet.balance,
+          creditCost: totalCredits,
+          selectedPack,
+          refreshWallet,
+        });
         await jobFinderApi.checkout(cart, paymentMethod);
       } else {
         const { orderId, paymentSessionId } = await jobFinderApi.checkout(cart, paymentMethod);
         await openCashfreeCheckout(paymentSessionId);
-        
-        let status = 'created';
-        let retries = 0;
-        while (status === 'created' && retries < 15) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          const res = await jobFinderApi.getOrderStatus(orderId);
-          status = res.status;
-          retries++;
-        }
-        
+
+        const status = await pollOrderStatus((id) => jobFinderApi.getOrderStatus(id), orderId);
+
         if (status !== 'paid') {
           throw new Error('Payment failed or was cancelled.');
         }
@@ -120,73 +122,24 @@ export default function CheckoutPage() {
         {/* Payment Method */}
         <div className="bento-card bg-white p-6 md:p-8 border border-black/5 space-y-6">
           <h2 className="font-display text-2xl font-bold uppercase mb-2 border-b border-black/10 pb-4">Payment Method</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Credits Option */}
-            <button 
-              type="button"
-              onClick={() => setPaymentMethod('credits')}
-              className={`p-6 rounded-[24px] border-2 text-left transition-all relative overflow-hidden ${
-                paymentMethod === 'credits' 
-                  ? 'border-[var(--color-accent-blue)] bg-[var(--color-accent-blue)]/5' 
-                  : 'border-black/10 hover:border-black/30'
-              }`}
+
+          <PaymentOptions
+            creditCost={totalCredits}
+            cashPrice={totalCash}
+            balance={wallet.balance}
+            method={paymentMethod}
+            onMethodChange={setPaymentMethod}
+            onSelectedPackChange={setSelectedPack}
+            creditsHint="Deduct from your wallet balance"
+          />
+
+          {paymentMethod === 'credits' && !hasEnoughCredits && myPlan?.planId?.tier === 'free' && (
+            <Link
+              to="/dashboard/billing"
+              className="block text-center pill-btn-secondary !py-2 text-xs bg-white text-[var(--color-accent-blue)] border-[var(--color-accent-blue)]/30 hover:border-[var(--color-accent-blue)]"
             >
-              <Coins className={`h-8 w-8 mb-4 ${paymentMethod === 'credits' ? 'text-[var(--color-accent-blue)]' : 'text-black/40'}`} />
-              <h4 className="font-bold text-lg">Pay with Credits</h4>
-              <p className="text-sm font-medium text-black/60 mt-1">Deduct from your wallet balance</p>
-              
-              <div className="mt-4 pt-4 border-t border-black/10 flex justify-between items-center text-sm font-bold uppercase tracking-widest">
-                <span className="text-black/40">Balance</span>
-                <span className={hasEnoughCredits ? 'text-black' : 'text-red-500'}>{wallet.balance}c</span>
-              </div>
-            </button>
-
-            {/* A la Carte Option */}
-            <button 
-              type="button"
-              onClick={() => setPaymentMethod('alacarte')}
-              className={`p-6 rounded-[24px] border-2 text-left transition-all ${
-                paymentMethod === 'alacarte' 
-                  ? 'border-[var(--color-accent-blue)] bg-[var(--color-accent-blue)]/5' 
-                  : 'border-black/10 hover:border-black/30'
-              }`}
-            >
-              <CreditCard className={`h-8 w-8 mb-4 ${paymentMethod === 'alacarte' ? 'text-[var(--color-accent-blue)]' : 'text-black/40'}`} />
-              <h4 className="font-bold text-lg">Pay A la Carte</h4>
-              <p className="text-sm font-medium text-black/60 mt-1">One-time card payment</p>
-              
-              <div className="mt-4 pt-4 border-t border-black/10 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-black/40">
-                <ShieldCheck className="h-4 w-4" /> SECURE CHECKOUT
-              </div>
-            </button>
-          </div>
-
-          {/* Warnings & Decorative Fields */}
-          {paymentMethod === 'credits' && !hasEnoughCredits && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-[16px] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-red-100">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <AlertCircle className="h-5 w-5" /> Insufficient Credits
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {myPlan?.planId?.tier === 'free' && (
-                  <Link to="/dashboard/billing" className="pill-btn-secondary !py-1.5 !px-4 text-xs bg-white text-[var(--color-accent-blue)] border-[var(--color-accent-blue)]/30 hover:border-[var(--color-accent-blue)]">
-                    UPGRADE TO PRO (SAVE {discountPercent || 15}%)
-                  </Link>
-                )}
-                <Link to="/dashboard/job-finder/wallet" className="pill-btn-secondary !py-1.5 !px-4 text-xs bg-white text-red-600 border-red-200">
-                  TOP UP WALLET
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {paymentMethod === 'alacarte' && (
-            <div className="bg-black/5 p-6 rounded-[24px] space-y-4 border border-black/10 animate-in fade-in slide-in-from-top-4">
-              <p className="text-sm font-medium text-black/80 text-center">
-                You will be redirected to our secure payment gateway to complete your purchase.
-              </p>
-            </div>
+              UPGRADE TO PRO (SAVE {discountPercent || 15}%)
+            </Link>
           )}
         </div>
       </div>
@@ -223,13 +176,21 @@ export default function CheckoutPage() {
 
           <button 
             onClick={handleCheckout}
-            disabled={isProcessing || (paymentMethod === 'credits' && !hasEnoughCredits)}
+            disabled={
+              isProcessing ||
+              (paymentMethod === 'credits' && !hasEnoughCredits && !selectedPack)
+            }
             className="w-full pill-btn bg-[var(--color-accent-blue)] text-white hover:bg-black disabled:opacity-50 flex items-center justify-center gap-2 py-4"
           >
             {isProcessing ? (
               <span className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"></span>
             ) : (
-              <>CONFIRM & PAY <ArrowRight className="h-5 w-5" /></>
+              <>
+                {paymentMethod === 'alacarte'
+                  ? 'CONFIRM & PAY'
+                  : getCreditsConfirmLabel({ hasEnoughCredits, selectedPack, creditCost: totalCredits })}{' '}
+                <ArrowRight className="h-5 w-5" />
+              </>
             )}
           </button>
           

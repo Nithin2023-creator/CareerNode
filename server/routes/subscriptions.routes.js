@@ -8,7 +8,7 @@ router.use(requireAuth);
 
 router.get('/', subscriptionsController.listSubscriptions);
 router.post('/checkout', subscriptionsController.checkout);
-router.get('/:id', subscriptionsController.getSubscription);
 router.get('/orders/:orderId', subscriptionsController.getOrderStatus);
+router.get('/:id', subscriptionsController.getSubscription);
 
 module.exports = router;

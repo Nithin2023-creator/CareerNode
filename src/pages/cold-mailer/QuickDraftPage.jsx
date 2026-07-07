@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Send, Sparkles, Copy, CheckSquare } from 'lucide-react';
 import { useToast } from '../../lib/toast.jsx';
@@ -47,9 +48,12 @@ export default function QuickDraftPage() {
     }
   };
 
-  const handleOpenInMail = () => {
-    const mailto = `mailto:?subject=${encodeURIComponent(preview.subject)}&body=${encodeURIComponent(preview.body)}`;
-    window.location.href = mailto;
+  const navigate = useNavigate();
+
+  const handleCreateCampaign = () => {
+    navigate('/dashboard/emailer/campaigns/new', {
+      state: { subject: preview.subject, body: preview.body }
+    });
   };
 
   return (
@@ -137,10 +141,10 @@ export default function QuickDraftPage() {
 
           <div className="mt-8 flex justify-end">
             <button
-              onClick={handleOpenInMail}
+              onClick={handleCreateCampaign}
               className="pill-btn group bg-black text-white hover:bg-[var(--color-accent-blue)] flex items-center gap-2"
             >
-              <Send className="h-5 w-5" /> OPEN IN MAIL
+              <Send className="h-5 w-5" /> CREATE CAMPAIGN
             </button>
           </div>
         </div>

@@ -20,7 +20,7 @@ const transactionSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    enum: ['job-finder', 'cold-mailer', 'membership'],
+    enum: ['job-finder', 'cold-mailer', 'membership', 'resume-maker'],
     required: true,
   },
   date: {

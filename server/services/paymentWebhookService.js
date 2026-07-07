@@ -2,28 +2,36 @@ const { verifyWebhookSignature } = require('./cashfreeClient');
 const WebhookEvent = require('../models/WebhookEvent');
 const PaymentOrder = require('../models/PaymentOrder');
 const UserMembership = require('../models/UserMembership');
-const MembershipPlan = require('../models/MembershipPlan');
 const walletService = require('./walletService');
-const subscriptionService = require('./subscriptionService');
 const BundlePurchase = require('../models/BundlePurchase');
 const Bundle = require('../models/Bundle');
+const CreditPack = require('../models/CreditPack');
+const Subscription = require('../models/Subscription');
+const Company = require('../models/Company');
+
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+function buildEventId(body) {
+  const type = body?.type || 'unknown';
+  const orderId = body?.data?.order?.order_id;
+  const subId = body?.data?.subscription?.subscription_id;
+  const paymentId = body?.data?.payment?.cf_payment_id;
+  const eventTime = body?.data?.event_time;
+  return body?.data?.event_id || `${type}_${orderId || subId || ''}_${paymentId || eventTime || Date.now()}`;
+}
 
 async function processWebhook(signature, rawBody, timestamp, body) {
-  // 1. Verify signature
   const isValid = verifyWebhookSignature(signature, rawBody, timestamp);
   if (!isValid) {
     throw new Error('Invalid webhook signature');
   }
 
-  // 2. Extract common webhook fields
-  const eventId = body?.data?.event_id || body?.data?.event_time || String(Date.now()); // Fallbacks in case format varies
   const type = body?.type;
-
   if (!type) {
     throw new Error('Webhook missing type');
   }
 
-  // 3. Idempotency check
+  const eventId = buildEventId(body);
   const existingEvent = await WebhookEvent.findOne({ eventId });
   if (existingEvent) {
     console.log(`[Webhook] Event ${eventId} already processed, skipping.`);
@@ -31,11 +39,9 @@ async function processWebhook(signature, rawBody, timestamp, body) {
   }
 
   await WebhookEvent.create({ eventId, type });
-  
   console.log(`[Webhook] Processing event ${type} (${eventId})`);
 
   try {
-    // 4. Route by type
     if (type === 'PAYMENT_SUCCESS_WEBHOOK') {
       await handlePaymentSuccess(body);
     } else if (type === 'PAYMENT_FAILED_WEBHOOK') {
@@ -49,101 +55,97 @@ async function processWebhook(signature, rawBody, timestamp, body) {
     } else {
       console.log(`[Webhook] Unhandled event type: ${type}`);
     }
-    
+
     return { success: true };
   } catch (error) {
-    // We do NOT delete the WebhookEvent if it failed permanently, but for transient errors we might want to.
-    // For now, let Cashfree retry it later by throwing, which causes a 500 response (if we want them to retry).
-    // Or we return 200 and log the error. We'll throw to let the controller return 500.
-    await WebhookEvent.deleteOne({ eventId }); // delete so it can be retried
+    await WebhookEvent.deleteOne({ eventId });
     throw error;
   }
 }
 
 async function handlePaymentSuccess(body) {
-  const { order_id, payment_amount, payment_currency } = body.data.order || body.data.payment; // depends on actual webhook format, usually body.data.order
-  const cfOrderId = order_id || body.data.order_id;
-  
+  const cfOrderId = body?.data?.order?.order_id || body?.data?.payment?.order_id;
+  if (!cfOrderId) return;
+
   const order = await PaymentOrder.findOne({ cfOrderId });
   if (!order) {
     console.warn(`[Webhook] Order ${cfOrderId} not found.`);
     return;
   }
 
-  if (order.status === 'paid') {
-    return;
-  }
+  if (order.status === 'paid') return;
 
-  order.status = 'paid';
-  order.fulfilledAt = new Date();
-
-  // Fulfill based on orderType
   if (order.orderType === 'wallet_topup') {
-    // Pack purchase
-    await walletService.addCredits(
-      order.userId,
-      // Need pack details. Ideally stored in referenceId
-      // Let's assume amount matches pack or we just add something for now?
-      // Wait, we need to know how many credits to add.
-      // We should really store `creditsToAdd` in PaymentOrder or lookup the pack.
-      // To keep it simple, I'll fetch the pack.
-      0, // Will be fixed below
-      `Wallet top-up (Order ${order.cfOrderId})`,
-      'purchase'
-    );
-    // Actually, let's fix this inside wallet controller or here. 
-    // We should probably fetch the pack. Let's do it right.
-    const CreditPack = require('../models/CreditPack');
     const pack = await CreditPack.findById(order.referenceId);
     if (pack) {
-      await walletService.addCredits(order.userId, pack.credits, `Wallet top-up (${pack.name})`, 'purchase');
+      await walletService.addCredits(
+        order.userId,
+        pack.credits,
+        `Wallet top-up (${pack.name})`,
+        'job-finder'
+      );
     }
   } else if (order.orderType === 'bundle') {
     const bundle = await Bundle.findById(order.referenceId);
     if (bundle) {
-      await BundlePurchase.create({
-        userId: order.userId,
-        bundleId: bundle._id,
-      });
-      // We also need to add bundle contents to user templates, etc., but BundlePurchase is what's used by API.
-    }
-  } else if (order.orderType === 'job_finder_checkout') {
-    // cartItems has the list
-    if (order.cartItems && order.cartItems.length > 0) {
-      for (const item of order.cartItems) {
-        // Here we just use the existing logic (simplified)
-        // Subscription model
-        const Subscription = require('../models/Subscription');
-        
-        // Ensure not already subscribed
-        const existing = await Subscription.findOne({
+      const existing = await BundlePurchase.findOne({ userId: order.userId, bundleId: bundle._id });
+      if (!existing) {
+        await BundlePurchase.create({
           userId: order.userId,
-          companyId: item.companyId || item.id,
-          status: 'active'
+          bundleId: bundle._id,
+          paymentMethod: 'alacarte',
+          pricePaid: order.amount,
         });
-
-        if (!existing) {
-          const endDate = new Date();
-          endDate.setMonth(endDate.getMonth() + 1);
-          
-          await Subscription.create({
-            userId: order.userId,
-            companyId: item.companyId || item.id,
-            status: 'active',
-            startDate: new Date(),
-            endDate: endDate
-          });
-        }
       }
+    }
+  } else if (order.orderType === 'credit_action') {
+    // A la carte payment for a flat-priced action (e.g. resume tailor/export).
+    // Nothing to grant here: the action itself is redeemed synchronously when
+    // the frontend calls the action endpoint with the paid order id. We only
+    // mark the order paid/fulfilled below so it can be consumed once.
+  } else if (order.orderType === 'job_finder_checkout' && order.cartItems?.length) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + ONE_MONTH_MS);
+
+    for (const item of order.cartItems) {
+      const companyId = item.companyId || item.id || item._id;
+      if (!companyId) continue;
+
+      const existing = await Subscription.findOne({
+        userId: order.userId,
+        companyId,
+        status: { $in: ['active', 'expiring'] },
+      });
+      if (existing) continue;
+
+      let pricePaid = item.pricePaid;
+      if (pricePaid == null) {
+        const company = await Company.findById(companyId).lean();
+        pricePaid = company?.alaCartePrice || 0;
+      }
+
+      await Subscription.create({
+        userId: order.userId,
+        companyId,
+        status: 'active',
+        paymentMethod: 'alacarte',
+        pricePaid,
+        purchasedAt: now,
+        expiresAt,
+      });
     }
   }
 
+  order.status = 'paid';
+  order.fulfilledAt = new Date();
   await order.save();
   console.log(`[Webhook] Fulfilled one-time order ${cfOrderId}`);
 }
 
 async function handlePaymentFailed(body) {
-  const cfOrderId = body.data?.order?.order_id || body.data?.order_id;
+  const cfOrderId = body?.data?.order?.order_id || body?.data?.payment?.order_id;
+  if (!cfOrderId) return;
+
   const order = await PaymentOrder.findOne({ cfOrderId });
   if (order && order.status === 'created') {
     order.status = 'failed';
@@ -153,8 +155,8 @@ async function handlePaymentFailed(body) {
 }
 
 async function handleSubscriptionStatusChange(body) {
-  const cfSubscriptionId = body.data?.subscription?.subscription_id;
-  const status = body.data?.subscription?.subscription_status; // ACTIVE, CANCELLED, ON_HOLD
+  const cfSubscriptionId = body?.data?.subscription?.subscription_id;
+  const status = body?.data?.subscription?.subscription_status;
 
   if (!cfSubscriptionId || !status) return;
 
@@ -162,23 +164,19 @@ async function handleSubscriptionStatusChange(body) {
   if (!membership) return;
 
   if (status === 'ACTIVE') {
+    if (membership.pendingPlanId) {
+      membership.planId = membership.pendingPlanId;
+      membership.pendingPlanId = null;
+    }
     membership.status = 'active';
+    membership.cancelAtPeriodEnd = false;
     const nextRenewal = new Date();
     nextRenewal.setMonth(nextRenewal.getMonth() + 1);
     membership.renewsAt = nextRenewal;
-    
-    // First time activation bonus credits
-    if (membership.planId.monthlyBonusCredits > 0) {
-       await walletService.addCredits(
-         membership.userId,
-         membership.planId.monthlyBonusCredits,
-         `Bonus for ${membership.planId.name}`,
-         'membership'
-       );
-    }
-    
   } else if (status === 'CANCELLED' || status === 'COMPLETED') {
     membership.status = 'cancelled';
+    membership.cfSubscriptionId = null;
+    membership.pendingPlanId = null;
   } else if (status === 'ON_HOLD') {
     membership.status = 'past_due';
   }
@@ -188,35 +186,30 @@ async function handleSubscriptionStatusChange(body) {
 }
 
 async function handleSubscriptionPaymentSuccess(body) {
-  const cfSubscriptionId = body.data?.subscription?.subscription_id;
-  const paymentId = body.data?.payment?.cf_payment_id;
+  const cfSubscriptionId = body?.data?.subscription?.subscription_id;
+  const paymentId = body?.data?.payment?.cf_payment_id;
 
   if (!cfSubscriptionId || !paymentId) return;
 
   const membership = await UserMembership.findOne({ cfSubscriptionId }).populate('planId');
   if (!membership) return;
 
-  // Idempotency for this specific payment
-  if (membership.lastPaymentId === paymentId) {
-    return;
-  }
-  
+  if (membership.lastPaymentId === paymentId) return;
+
   membership.lastPaymentId = paymentId;
-  
-  // Extend renewal
+  membership.status = 'active';
+
   const nextRenewal = new Date(membership.renewsAt || Date.now());
   nextRenewal.setMonth(nextRenewal.getMonth() + 1);
   membership.renewsAt = nextRenewal;
-  membership.status = 'active'; // clear past_due if it was
 
-  // Add monthly bonus
-  if (membership.planId.monthlyBonusCredits > 0) {
-     await walletService.addCredits(
-       membership.userId,
-       membership.planId.monthlyBonusCredits,
-       `Monthly ${membership.planId.name} renewal`,
-       'membership'
-     );
+  if (membership.planId?.monthlyBonusCredits > 0) {
+    await walletService.addCredits(
+      membership.userId,
+      membership.planId.monthlyBonusCredits,
+      `Monthly ${membership.planId.name} bonus credits`,
+      'membership'
+    );
   }
 
   await membership.save();
@@ -224,17 +217,17 @@ async function handleSubscriptionPaymentSuccess(body) {
 }
 
 async function handleSubscriptionPaymentFailed(body) {
-  const cfSubscriptionId = body.data?.subscription?.subscription_id;
+  const cfSubscriptionId = body?.data?.subscription?.subscription_id;
   if (!cfSubscriptionId) return;
-  
+
   const membership = await UserMembership.findOne({ cfSubscriptionId });
   if (membership) {
     membership.status = 'past_due';
     await membership.save();
-    console.log(`[Webhook] Marked subscription ${cfSubscriptionId} as past_due due to payment failure`);
+    console.log(`[Webhook] Marked subscription ${cfSubscriptionId} as past_due`);
   }
 }
 
 module.exports = {
-  processWebhook
+  processWebhook,
 };

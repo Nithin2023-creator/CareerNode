@@ -2,7 +2,7 @@ const { campaignService } = require('../services/campaignService');
 
 const listCampaigns = async (req, res, next) => {
   try {
-    const campaigns = await campaignService.listCampaigns();
+    const campaigns = await campaignService.listCampaigns(req.user._id);
     res.json({ data: campaigns });
   } catch (error) {
     next(error);
@@ -11,7 +11,7 @@ const listCampaigns = async (req, res, next) => {
 
 const getCampaign = async (req, res, next) => {
   try {
-    const campaign = await campaignService.getCampaign(req.params.id);
+    const campaign = await campaignService.getCampaign(req.user._id, req.params.id);
     res.json({ data: campaign });
   } catch (error) {
     next(error);
@@ -20,7 +20,7 @@ const getCampaign = async (req, res, next) => {
 
 const getCampaignStatus = async (req, res, next) => {
   try {
-    const status = await campaignService.getCampaignStatus(req.params.id);
+    const status = await campaignService.getCampaignStatus(req.user._id, req.params.id);
     res.json({ data: status });
   } catch (error) {
     next(error);
@@ -31,6 +31,7 @@ const createCampaign = async (req, res, next) => {
   try {
     const { title, templateSubject, templateBody, recipients } = req.body;
     const campaign = await campaignService.createCampaign({
+      userId: req.user._id,
       title,
       templateSubject,
       templateBody,
@@ -47,7 +48,7 @@ const createCampaign = async (req, res, next) => {
 const updateCampaign = async (req, res, next) => {
   try {
     const { title, templateSubject, templateBody } = req.body;
-    const campaign = await campaignService.updateCampaign(req.params.id, {
+    const campaign = await campaignService.updateCampaign(req.user._id, req.params.id, {
       title,
       templateSubject,
       templateBody,
@@ -60,7 +61,7 @@ const updateCampaign = async (req, res, next) => {
 
 const deleteCampaign = async (req, res, next) => {
   try {
-    await campaignService.deleteCampaign(req.params.id);
+    await campaignService.deleteCampaign(req.user._id, req.params.id);
     res.status(204).send();
   } catch (error) {
     next(error);
@@ -77,22 +78,22 @@ const updateCampaignStatus = async (req, res, next) => {
     let campaign;
     switch (action) {
       case 'send':
-        campaign = await campaignService.startCampaign(id);
+        campaign = await campaignService.startCampaign(req.user._id, id);
         break;
       case 'pause':
-        campaign = await campaignService.pauseCampaign(id);
+        campaign = await campaignService.pauseCampaign(req.user._id, id);
         break;
       case 'stop':
-        campaign = await campaignService.stopCampaign(id);
+        campaign = await campaignService.stopCampaign(req.user._id, id);
         break;
       case 'resume':
-        campaign = await campaignService.resumeCampaign(id, startFromIndex);
+        campaign = await campaignService.resumeCampaign(req.user._id, id, startFromIndex);
         break;
       case 'retry-failed':
-        campaign = await campaignService.retryFailed(id);
+        campaign = await campaignService.retryFailed(req.user._id, id);
         break;
       case 'reset':
-        campaign = await campaignService.resetCampaign(id);
+        campaign = await campaignService.resetCampaign(req.user._id, id);
         break;
       default:
         return res.status(400).json({

@@ -18,6 +18,7 @@ const recipientSchema = new mongoose.Schema({
 });
 
 const campaignSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   title: { type: String, required: true },
   templateSubject: { type: String, required: true },
   templateBody: { type: String, required: true },

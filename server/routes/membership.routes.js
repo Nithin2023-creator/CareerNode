@@ -51,22 +51,23 @@ router.post('/subscribe', requireAuth, async (req, res, next) => {
     }
 
     if (plan.tier !== 'free') {
-      const { cfSubscriptionId, authSessionId } = await paymentService.createSubscription({
-        userId: req.user._id,
-        plan,
-        customerDetails: {
-          name: req.user.name,
-          email: req.user.email
-        }
-      });
-      
+      const { cfSubscriptionId, paymentSessionId, authorizationLink } =
+        await paymentService.createSubscription({
+          userId: req.user._id,
+          plan,
+          customerDetails: {
+            name: req.user.name,
+            email: req.user.email,
+          },
+        });
+
       membership.cfSubscriptionId = cfSubscriptionId;
-      membership.planId = plan._id;
+      membership.pendingPlanId = plan._id;
       membership.status = 'pending_authorization';
-      
+
       await membership.save();
-      
-      return res.json({ success: true, authSessionId });
+
+      return res.json({ success: true, paymentSessionId, authorizationLink });
     } else {
       if (membership.cfSubscriptionId) {
         await paymentService.cancelSubscription(membership.cfSubscriptionId);

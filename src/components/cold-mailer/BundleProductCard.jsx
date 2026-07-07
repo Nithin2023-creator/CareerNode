@@ -25,7 +25,7 @@ export default function BundleProductCard({ bundle }) {
           <h3 className="font-display text-xl font-bold uppercase">{bundle.name}</h3>
         </div>
         <div className="flex flex-col items-end">
-          <span className="font-bold text-lg">${bundle.alaCartePrice}</span>
+          <span className="font-bold text-lg">₹{bundle.alaCartePrice}</span>
           <span className="text-sm text-black/40">or {bundle.creditCost} cr</span>
         </div>
       </div>

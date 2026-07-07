@@ -68,7 +68,7 @@ export default function BundleCartDrawer({ isOpen, onClose }) {
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="font-bold">{item.creditCost} cr</span>
-                        <span className="text-xs text-black/40 mb-2">${item.alaCartePrice}</span>
+                        <span className="text-xs text-black/40 mb-2">₹{item.alaCartePrice}</span>
                         <button 
                           onClick={() => removeFromCart(item._id)}
                           className="text-red-500 hover:text-red-700 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity p-1"
@@ -93,7 +93,7 @@ export default function BundleCartDrawer({ isOpen, onClose }) {
                     <span className="font-bold">Total Cost</span>
                     <div className="text-right">
                       <span className="font-bold block">{totalCredits} cr</span>
-                      <span className="text-sm text-black/40">or ${totalAlaCarte}</span>
+                      <span className="text-sm text-black/40">or ₹{totalAlaCarte}</span>
                     </div>
                   </div>
                   {shortfall > 0 && (

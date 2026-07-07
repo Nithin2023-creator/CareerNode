@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { membershipApi } from '../../lib/api';
 import { Check } from 'lucide-react';
-import { openCashfreeCheckout } from '../../lib/cashfree';
+import { openSubscriptionAuthorization, pollMembershipActive } from '../../lib/cashfree';
 
 export default function MembershipPage() {
   const [plans, setPlans] = useState([]);
@@ -9,46 +9,56 @@ export default function MembershipPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
+  const fetchMembership = async () => {
+    const [plansRes, meRes] = await Promise.all([
+      membershipApi.getPlans(),
+      membershipApi.getMe(),
+    ]);
+    setPlans(plansRes);
+    setMyPlan(meRes);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [plansRes, meRes] = await Promise.all([
-          membershipApi.getPlans(),
-          membershipApi.getMe()
-        ]);
-        setPlans(plansRes);
-        setMyPlan(meRes);
-      } catch (err) {
-        console.error('Failed to load membership data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchMembership()
+      .catch((err) => console.error('Failed to load membership data', err))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSubscribe = async (planId) => {
     setActionLoading(true);
     try {
       const res = await membershipApi.subscribe(planId);
-      if (res.authSessionId) {
-        await openCashfreeCheckout(res.authSessionId);
-        // Wait for webhook processing and redirect/reload
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
-      } else if (res.success) {
+
+      if (res.paymentSessionId || res.authorizationLink) {
+        await openSubscriptionAuthorization({
+          paymentSessionId: res.paymentSessionId,
+          authorizationLink: res.authorizationLink,
+        });
+
+        const updated = await pollMembershipActive(() => membershipApi.getMe());
+        if (updated) {
+          setMyPlan(updated);
+        } else {
+          alert('Authorization is still processing. Refresh the page in a moment.');
+        }
+      } else if (res.success && res.membership) {
         setMyPlan(res.membership);
-        window.location.reload();
       }
     } catch (err) {
       alert(err.message || 'Failed to subscribe');
+    } finally {
       setActionLoading(false);
     }
   };
 
   const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel your paid membership? You will keep your benefits until the end of the billing period.')) return;
+    if (
+      !confirm(
+        'Are you sure you want to cancel your paid membership? You will keep your benefits until the end of the billing period.'
+      )
+    ) {
+      return;
+    }
 
     setActionLoading(true);
     try {
@@ -72,6 +82,7 @@ export default function MembershipPage() {
   }
 
   const currentPlanTier = myPlan?.planId?.tier || 'free';
+  const isPendingAuth = myPlan?.status === 'pending_authorization';
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -82,10 +93,19 @@ export default function MembershipPage() {
         <p className="text-black/50 font-medium mt-2">Manage your plan, perks, and monthly credits.</p>
       </header>
 
+      {isPendingAuth && (
+        <div className="bento-card bg-[var(--color-accent-blue)]/10 border-2 border-[var(--color-accent-blue)]/30 p-4 rounded-2xl">
+          <p className="text-[var(--color-accent-blue)] font-semibold">
+            Your membership upgrade is awaiting payment authorization. Complete the Cashfree mandate if you have not already.
+          </p>
+        </div>
+      )}
+
       {myPlan?.cancelAtPeriodEnd && (
         <div className="bento-card bg-red-50 border-2 border-red-200 p-4 rounded-2xl">
           <p className="text-red-700 font-semibold">
-            Your membership is set to cancel at the end of the current period ({new Date(myPlan.renewsAt).toLocaleDateString()}).
+            Your membership is set to cancel at the end of the current period (
+            {new Date(myPlan.renewsAt).toLocaleDateString()}).
           </p>
         </div>
       )}
@@ -93,6 +113,8 @@ export default function MembershipPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => {
           const isCurrent = currentPlanTier === plan.tier;
+          const isPendingThisPlan =
+            isPendingAuth && String(myPlan?.pendingPlanId) === String(plan._id);
 
           return (
             <div
@@ -101,7 +123,7 @@ export default function MembershipPage() {
                 isCurrent ? 'border-black shadow-[var(--shadow-lift)]' : 'border-black/10'
               }`}
             >
-              {plan.tier === 'pro' && !isCurrent && (
+              {plan.tier === 'pro' && !isCurrent && !isPendingThisPlan && (
                 <div className="absolute -top-3 -right-3 bg-[var(--color-accent-blue)] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 border-2 border-black rounded-full shadow-[var(--shadow-soft)] rotate-3">
                   Most Popular
                 </div>
@@ -109,6 +131,11 @@ export default function MembershipPage() {
               {isCurrent && (
                 <div className="absolute -top-3 -left-3 bg-black text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 border-2 border-black rounded-full shadow-[var(--shadow-soft)] -rotate-3">
                   Current Plan
+                </div>
+              )}
+              {isPendingThisPlan && (
+                <div className="absolute -top-3 -left-3 bg-[var(--color-accent-yellow)] text-black text-[10px] font-bold uppercase tracking-widest px-3 py-1 border-2 border-black rounded-full shadow-[var(--shadow-soft)] -rotate-3">
+                  Authorizing
                 </div>
               )}
 
@@ -149,11 +176,18 @@ export default function MembershipPage() {
                       </button>
                     )
                   )
+                ) : isPendingThisPlan ? (
+                  <button
+                    disabled
+                    className="w-full py-3 px-4 bg-black/5 text-black/50 font-bold uppercase tracking-widest rounded-full text-sm"
+                  >
+                    Awaiting Authorization
+                  </button>
                 ) : (
                   <button
                     onClick={() => handleSubscribe(plan._id)}
-                    disabled={actionLoading}
-                    className={`w-full py-3 px-4 font-bold uppercase tracking-widest rounded-full border-2 border-black shadow-[var(--shadow-soft)] hover:-translate-y-0.5 transition-all text-sm ${
+                    disabled={actionLoading || isPendingAuth}
+                    className={`w-full py-3 px-4 font-bold uppercase tracking-widest rounded-full border-2 border-black shadow-[var(--shadow-soft)] hover:-translate-y-0.5 transition-all text-sm disabled:opacity-50 ${
                       plan.tier === 'pro'
                         ? 'bg-[var(--color-accent-blue)] text-white'
                         : 'bg-[var(--color-accent-yellow)] text-black'

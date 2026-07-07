@@ -1,3 +1,7 @@
+export const isGmailReady = (status) => Boolean(status?.connected);
+
+export const isGmailRevoked = (status) => status?.status === 'revoked';
+
 // Standard token fields recognized by the backend for personalization.
 export const TEMPLATE_TOKENS = ['companyName', 'hrName', 'email', 'role'];
 

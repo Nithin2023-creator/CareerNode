@@ -155,6 +155,108 @@ const aiService = {
 
     return allCleanedRows;
   },
+
+  /**
+   * Parse freeform resume text into the standard JSON structure.
+   */
+  async parseResumeText(rawText) {
+    const DEFAULT_RESUME_DATA = {
+      personalInfo: { fullName: '', phone: '', email: '', linkedin: '', github: '' },
+      education: [],
+      skills: [],
+      experience: [],
+      projects: [],
+      publications: [],
+      achievements: []
+    };
+
+    if (!isApiKeyConfigured()) {
+      console.warn('GROQ_API_KEY not set. Returning empty resume structure.');
+      return DEFAULT_RESUME_DATA;
+    }
+
+    const prompt = `
+    You are an intelligent resume parsing assistant.
+    Extract the following resume text into a strict JSON structure.
+    
+    The JSON must follow this exact structure (fill in whatever you find, leave empty strings/arrays if missing):
+    {
+      "personalInfo": { "fullName": "", "phone": "", "email": "", "linkedin": "", "github": "" },
+      "education": [ { "institution": "", "degree": "", "location": "", "startDate": "", "endDate": "" } ],
+      "skills": [ { "category": "", "items": "comma separated skills" } ],
+      "experience": [ { "company": "", "role": "", "location": "", "startDate": "", "endDate": "", "bullets": [""] } ],
+      "projects": [ { "name": "", "links": "", "techStack": "", "bullets": [""] } ],
+      "publications": [ { "title": "", "description": "" } ],
+      "achievements": [ "string" ]
+    }
+
+    Resume Text:
+    ${rawText}
+
+    Return ONLY the valid JSON object.
+    `;
+
+    try {
+      const content = await callGroq(
+        [
+          { role: 'system', content: 'You output strict JSON only.' },
+          { role: 'user', content: prompt },
+        ],
+        0.1
+      );
+      return extractJSON(content);
+    } catch (error) {
+      const apiError = error.response?.data?.error || error.message;
+      console.error('AI resume parse error:', apiError);
+      return DEFAULT_RESUME_DATA; // Fallback gracefully
+    }
+  },
+
+  /**
+   * Tailor a parsed resume JSON against a Job Description.
+   */
+  async tailorResume(resumeData, jobDescription) {
+    if (!isApiKeyConfigured()) {
+      console.warn('GROQ_API_KEY not set. Returning original resume.');
+      return resumeData;
+    }
+
+    const prompt = `
+    You are an expert ATS resume tailor.
+    I will provide you with a candidate's resume (in JSON format) and a Job Description.
+    Your task is to tailor the resume to the Job Description to maximize ATS score.
+    
+    Rules:
+    1. DO NOT fabricate any employers, dates, or degrees. Be truthful.
+    2. Rewrite bullet points in experience and projects to highlight keywords from the JD where relevant.
+    3. Start bullets with strong action verbs.
+    4. Reorder skills so the ones mentioned in the JD appear first.
+    5. Ensure the returned format is EXACTLY the same JSON structure as the input.
+    
+    Job Description:
+    ${jobDescription}
+    
+    Resume JSON:
+    ${JSON.stringify(resumeData)}
+    
+    Return ONLY the tailored JSON object.
+    `;
+
+    try {
+      const content = await callGroq(
+        [
+          { role: 'system', content: 'You output strict JSON only matching the input schema.' },
+          { role: 'user', content: prompt },
+        ],
+        0.2
+      );
+      return extractJSON(content);
+    } catch (error) {
+      const apiError = error.response?.data?.error || error.message;
+      console.error('AI resume tailor error:', apiError);
+      return resumeData; // Fallback gracefully to original
+    }
+  }
 };
 
 module.exports = aiService;

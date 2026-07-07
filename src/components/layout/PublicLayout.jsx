@@ -12,6 +12,7 @@ import LoginModal from '../auth/LoginModal';
 export default function PublicLayout() {
   const location = useLocation();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const isAuthenticated = !!localStorage.getItem('cn_token');
 
   useEffect(() => {
     return initLenisScroll();
@@ -50,12 +51,14 @@ export default function PublicLayout() {
             >
               Pricing
             </Link>
-            <button 
-              onClick={() => setIsLoginModalOpen(true)}
-              className="text-xs sm:text-sm font-bold tracking-widest uppercase hover:text-[var(--color-accent-blue)] transition-colors"
-            >
-              Log in
-            </button>
+            {!isAuthenticated && (
+              <button 
+                onClick={() => setIsLoginModalOpen(true)}
+                className="text-xs sm:text-sm font-bold tracking-widest uppercase hover:text-[var(--color-accent-blue)] transition-colors"
+              >
+                Log in
+              </button>
+            )}
             <Link to="/dashboard" className="bg-black text-white rounded-full px-4 py-2 sm:px-6 sm:py-3 font-bold text-xs sm:text-sm tracking-widest hover:bg-[var(--color-accent-blue)] hover:text-white hover:-translate-y-0.5 transition-all flex items-center gap-1 sm:gap-2 group shadow-[var(--shadow-soft)]">
               DASHBOARD <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
