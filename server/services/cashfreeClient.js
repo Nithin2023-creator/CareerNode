@@ -11,7 +11,7 @@ const cashfree = new CashfreeSDK(
 
 const verifyWebhookSignature = (signature, rawBody, timestamp) => {
   try {
-    CashfreeSDK.PGVerifyWebhookSignature(signature, rawBody, timestamp);
+    cashfree.PGVerifyWebhookSignature(signature, rawBody, timestamp);
     return true;
   } catch (error) {
     console.error('Error verifying webhook signature:', error.message);

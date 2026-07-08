@@ -20,11 +20,23 @@ const getBaseUrl = () =>
     ? 'https://api.cashfree.com/pg'
     : 'https://sandbox.cashfree.com/pg';
 
+function requirePaymentEnv() {
+  const missing = [];
+  if (!process.env.CLIENT_ORIGIN) missing.push('CLIENT_ORIGIN');
+  if (!process.env.SERVER_PUBLIC_URL) missing.push('SERVER_PUBLIC_URL');
+  if (!process.env.CASHFREE_APP_ID) missing.push('CASHFREE_APP_ID');
+  if (!process.env.CASHFREE_SECRET_KEY) missing.push('CASHFREE_SECRET_KEY');
+  if (missing.length) {
+    throw new Error(`Missing payment env vars: ${missing.join(', ')}`);
+  }
+}
+
 /**
  * Creates a one-time payment order in Cashfree.
  * `amount` is in USD (catalog price); stored and charged in INR.
  */
 async function createOrder({ userId, amount, orderType, referenceId, cartItems, customerDetails }) {
+  requirePaymentEnv();
   const cfOrderId = `order_${Date.now()}_${Math.random().toString(36).substring(7)}`;
   const amountInr = toInr(amount);
 
