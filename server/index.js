@@ -1,7 +1,18 @@
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+// Load environment-specific config: .env.local (dev) or .env.production (prod)
+// then fall back to .env for any shared / base values.
+const path = require('path');
+const dotenv = require('dotenv');
+
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const envFile = NODE_ENV === 'production' ? '.env.production' : '.env.local';
+
+// Environment-specific file first (values set here win)
+dotenv.config({ path: path.join(__dirname, envFile) });
+// Base .env as fallback (won't overwrite already-set keys)
+dotenv.config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+
 const connectDB = require('./config/db');
 const { campaignService } = require('./services/campaignService');
 const { startMembershipRenewalJob } = require('./services/membershipRenewalJob');

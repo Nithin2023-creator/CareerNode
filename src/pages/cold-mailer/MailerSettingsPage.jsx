@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, PlugZap, CheckCircle2, XCircle, LogOut } from 'lucide-react';
 import { gmailConnectionApi } from '../../lib/api.js';
@@ -13,6 +13,7 @@ export default function MailerSettingsPage() {
   const [error, setError] = useState(null);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState(null);
+  const connectingRef = useRef(false);
 
   const fetchStatus = async () => {
     try {
@@ -31,6 +32,13 @@ export default function MailerSettingsPage() {
   }, []);
 
   const handleGoogleSuccess = async (codeResponse) => {
+    if (connectingRef.current) return;
+    if (!codeResponse?.code) {
+      toast.error('Google did not return an authorization code. Please try again.');
+      return;
+    }
+
+    connectingRef.current = true;
     try {
       setLoading(true);
       const data = await gmailConnectionApi.connect(codeResponse.code);
@@ -39,6 +47,7 @@ export default function MailerSettingsPage() {
     } catch (err) {
       toast.error(err.message);
     } finally {
+      connectingRef.current = false;
       setLoading(false);
     }
   };

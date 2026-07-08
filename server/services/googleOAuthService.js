@@ -1,16 +1,25 @@
 const { OAuth2Client } = require('google-auth-library');
 
+const REDIRECT_URI = 'postmessage';
+
 const getClient = () => {
-  return new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    'postmessage'
-  );
+  return new OAuth2Client({
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    redirectUri: REDIRECT_URI,
+  });
 };
 
 const exchangeCodeForTokens = async (code) => {
+  if (!code || typeof code !== 'string') {
+    throw new Error('Authorization code is required');
+  }
+
   const client = getClient();
-  const { tokens } = await client.getToken(code);
+  const { tokens } = await client.getToken({
+    code,
+    redirect_uri: REDIRECT_URI,
+  });
   return tokens;
 };
 
@@ -26,7 +35,23 @@ const revokeToken = async (token) => {
 
 const isRevokedError = (err) => {
   const message = err?.message || '';
-  return message.includes('invalid_grant');
+  const description = err?.response?.data?.error_description || '';
+  const code = err?.response?.data?.error || '';
+  return (
+    message.includes('invalid_grant') ||
+    description.includes('invalid_grant') ||
+    code === 'invalid_grant'
+  );
+};
+
+const isDecryptError = (err) => {
+  const message = err?.message || '';
+  return (
+    message.includes('Invalid encrypted token') ||
+    message.includes('TOKEN_ENCRYPTION_KEY') ||
+    message.includes('Unsupported state') ||
+    message.includes('auth tag')
+  );
 };
 
 const verifyConnection = async (connection, refreshToken) => {
@@ -52,4 +77,11 @@ const verifyConnection = async (connection, refreshToken) => {
   }
 };
 
-module.exports = { exchangeCodeForTokens, revokeToken, getClient, verifyConnection };
+module.exports = {
+  exchangeCodeForTokens,
+  revokeToken,
+  getClient,
+  verifyConnection,
+  isRevokedError,
+  isDecryptError,
+};

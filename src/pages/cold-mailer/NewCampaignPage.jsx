@@ -60,6 +60,7 @@ export default function NewCampaignPage() {
   const [testResult, setTestResult] = useState(null);
 
   const bodyRef = useRef(null);
+  const connectingRef = useRef(false);
 
   useEffect(() => {
     fetchGmailStatus();
@@ -78,6 +79,13 @@ export default function NewCampaignPage() {
   };
 
   const handleGoogleSuccess = async (codeResponse) => {
+    if (connectingRef.current) return;
+    if (!codeResponse?.code) {
+      toast.error('Google did not return an authorization code. Please try again.');
+      return;
+    }
+
+    connectingRef.current = true;
     try {
       setCheckingGmail(true);
       const data = await gmailConnectionApi.connect(codeResponse.code);
@@ -86,6 +94,7 @@ export default function NewCampaignPage() {
     } catch (err) {
       toast.error(err.message);
     } finally {
+      connectingRef.current = false;
       setCheckingGmail(false);
     }
   };

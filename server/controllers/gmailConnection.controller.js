@@ -12,6 +12,96 @@ const buildStatusResponse = (connection) => ({
   connectedAt: connection.connectedAt,
 });
 
+const isVerificationStale = (connection) => {
+  if (!connection.lastVerifiedAt) return true;
+  const lastVerifiedMs = new Date(connection.lastVerifiedAt).getTime();
+  if (Number.isNaN(lastVerifiedMs)) return true;
+  return Date.now() - lastVerifiedMs > VERIFY_TTL_MS;
+};
+
+const markConnectionRevoked = async (connection) => {
+  connection.status = 'revoked';
+  try {
+    await connection.save();
+  } catch (saveErr) {
+    console.error('Failed to persist revoked Gmail connection status:', saveErr.message);
+  }
+};
+
+const verifyActiveConnection = async (connection) => {
+  if (connection.status !== 'active' || !isVerificationStale(connection)) {
+    return;
+  }
+
+  let refreshToken;
+  try {
+    refreshToken = decrypt(connection.refreshTokenEnc);
+  } catch (err) {
+    console.error('Gmail token decrypt failed during status check:', err.message);
+    if (googleOAuthService.isDecryptError(err)) {
+      await markConnectionRevoked(connection);
+    }
+    return;
+  }
+
+  try {
+    await googleOAuthService.verifyConnection(connection, refreshToken);
+  } catch (err) {
+    console.error('Gmail verification failed during status check:', err.message);
+  }
+};
+
+const getEmailFromIdToken = (idToken) => {
+  if (!idToken) return null;
+  try {
+    const payload = JSON.parse(
+      Buffer.from(idToken.split('.')[1], 'base64url').toString('utf8')
+    );
+    return payload.email || null;
+  } catch {
+    return null;
+  }
+};
+
+const mapGoogleError = (err, fallbackMessage) => {
+  if (err.statusCode) return err;
+
+  const googleError = err.response?.data?.error || '';
+  const message =
+    err.response?.data?.error_description ||
+    err.response?.data?.error?.message ||
+    googleError ||
+    err.message ||
+    fallbackMessage;
+
+  console.error('Gmail OAuth error:', {
+    error: googleError,
+    description: err.response?.data?.error_description,
+    message: err.message,
+  });
+
+  if (googleOAuthService.isRevokedError(err) || String(message).includes('invalid_grant')) {
+    return httpError(400, 'Google authorization expired. Please connect again.');
+  }
+
+  if (
+    String(googleError).includes('invalid_request') ||
+    String(message).includes('invalid_request') ||
+    String(message).includes('Missing parameter: redirect_uri')
+  ) {
+    return httpError(
+      400,
+      'Google authorization failed. Please close the popup and click Connect with Google again.'
+    );
+  }
+
+  if (String(message).includes('redirect_uri_mismatch')) {
+    return httpError(400, 'Google OAuth redirect configuration is invalid.');
+  }
+
+  return httpError(500, `${fallbackMessage}: ${message}`);
+};
+
 const getStatus = async (req, res, next) => {
   try {
     const connection = await GmailConnection.findOne({ userId: req.user._id });
@@ -19,15 +109,7 @@ const getStatus = async (req, res, next) => {
       return res.json({ data: { connected: false } });
     }
 
-    const isStale =
-      !connection.lastVerifiedAt ||
-      Date.now() - connection.lastVerifiedAt.getTime() > VERIFY_TTL_MS;
-
-    if (connection.status === 'active' && isStale) {
-      const refreshToken = decrypt(connection.refreshTokenEnc);
-      await googleOAuthService.verifyConnection(connection, refreshToken);
-    }
-
+    await verifyActiveConnection(connection);
     res.json({ data: buildStatusResponse(connection) });
   } catch (err) {
     next(err);
@@ -51,8 +133,18 @@ const connect = async (req, res, next) => {
 
     const client = googleOAuthService.getClient();
     client.setCredentials(tokens);
-    const userInfoResponse = await client.request({ url: 'https://www.googleapis.com/oauth2/v2/userinfo' });
-    const email = userInfoResponse.data.email;
+
+    let email = getEmailFromIdToken(tokens.id_token);
+    if (!email) {
+      const userInfoResponse = await client.request({
+        url: 'https://www.googleapis.com/oauth2/v2/userinfo',
+      });
+      email = userInfoResponse.data.email;
+    }
+
+    if (!email) {
+      throw httpError(400, 'Could not read your Google account email. Please reconnect and allow email access.');
+    }
 
     const encryptedToken = encrypt(tokens.refresh_token);
 
@@ -72,7 +164,7 @@ const connect = async (req, res, next) => {
 
     res.json({ data: buildStatusResponse(connection) });
   } catch (err) {
-    next(err);
+    next(mapGoogleError(err, 'Failed to connect Gmail'));
   }
 };
 
@@ -101,7 +193,17 @@ const testConnection = async (req, res, next) => {
       throw httpError(400, 'Gmail not connected or revoked');
     }
 
-    const refreshToken = decrypt(connection.refreshTokenEnc);
+    let refreshToken;
+    try {
+      refreshToken = decrypt(connection.refreshTokenEnc);
+    } catch (err) {
+      if (googleOAuthService.isDecryptError(err)) {
+        await markConnectionRevoked(connection);
+        throw httpError(400, 'Gmail connection is invalid. Please reconnect.');
+      }
+      throw err;
+    }
+
     const result = await googleOAuthService.verifyConnection(connection, refreshToken);
 
     if (result.verified) {
@@ -115,7 +217,7 @@ const testConnection = async (req, res, next) => {
     throw httpError(500, 'Failed to verify Gmail connection: ' + result.message);
   } catch (err) {
     if (err.statusCode) return next(err);
-    next(httpError(500, 'Failed to verify Gmail connection: ' + err.message));
+    next(mapGoogleError(err, 'Failed to verify Gmail connection'));
   }
 };
 
