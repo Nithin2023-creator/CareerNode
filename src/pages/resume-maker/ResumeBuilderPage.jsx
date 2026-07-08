@@ -38,8 +38,11 @@ export default function ResumeBuilderPage() {
   const loadResume = async (id) => {
     try {
       setIsLoading(true);
-      const data = await resumeApi.get(id);
-      setInitialData(data);
+      const resume = await resumeApi.get(id);
+      if (!resume?.data) {
+        throw new Error('Resume data is missing');
+      }
+      setInitialData(resume);
     } catch (err) {
       console.error('Failed to load resume:', err);
       setError('Could not load the saved resume.');

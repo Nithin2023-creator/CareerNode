@@ -17,6 +17,16 @@ import {
   AchievementsSection
 } from './ResumeFormSections';
 
+const DEFAULT_RESUME_DATA = {
+  personalInfo: { fullName: '', phone: '', email: '', linkedin: '', github: '' },
+  education: [],
+  skills: [],
+  experience: [],
+  projects: [],
+  publications: [],
+  achievements: [],
+};
+
 export default function ResumeEditor({ 
   initialData, 
   initialTitle = 'Untitled Resume',
@@ -30,7 +40,7 @@ export default function ResumeEditor({
   const toast = useToast();
   const openPaywall = usePaywall();
   
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState(initialData || DEFAULT_RESUME_DATA);
   const [title, setTitle] = useState(initialTitle);
   const [atsScore, setAtsScore] = useState(initialAtsScore);
   
@@ -54,7 +64,7 @@ export default function ResumeEditor({
   // Tailored resumes export for free (the AI tailoring already covered the cost).
   const EXPORT_CREDIT_COST = mode === 'scratch' ? pricing.creditCost : 0;
 
-  const handleSave = async () => {
+  const handleSave = async ({ skipNavigate = false } = {}) => {
     try {
       setIsSaving(true);
       const payload = {
@@ -74,12 +84,15 @@ export default function ResumeEditor({
         toast.success('Resume saved successfully');
       }
       
-      if (onSaveComplete) {
+      if (onSaveComplete && !skipNavigate) {
         onSaveComplete(savedResume);
       }
+
+      return savedResume;
     } catch (err) {
       console.error('Save error:', err);
       toast.error(err.message || 'Failed to save resume');
+      return null;
     } finally {
       setIsSaving(false);
     }
@@ -104,8 +117,11 @@ export default function ResumeEditor({
   const runExport = async (paidOrderId) => {
     await resumeApi.export({ mode, paidOrderId });
     await refreshWallet();
-    await handleSave();
+    const savedResume = await handleSave({ skipNavigate: true });
     window.print();
+    if (savedResume && onSaveComplete) {
+      onSaveComplete(savedResume);
+    }
   };
 
   const handleGenerate = async () => {

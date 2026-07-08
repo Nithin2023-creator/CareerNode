@@ -51,11 +51,14 @@ export default function ResumeTailorPage() {
   const loadResume = async (id) => {
     try {
       setIsLoading(true);
-      const data = await resumeApi.get(id);
-      setTailoredResume(data.data);
-      setTailoredTitle(data.title || 'Untitled Resume');
-      setJobDescription(data.jobDescription || '');
-      setAtsScore(data.atsScore);
+      const resume = await resumeApi.get(id);
+      if (!resume?.data) {
+        throw new Error('Resume data is missing');
+      }
+      setTailoredResume(resume.data);
+      setTailoredTitle(resume.title || 'Untitled Resume');
+      setJobDescription(resume.jobDescription || '');
+      setAtsScore(resume.atsScore);
       setStep(3);
     } catch (err) {
       console.error('Failed to load resume:', err);
@@ -90,8 +93,8 @@ export default function ResumeTailorPage() {
 
       const response = await resumeApi.tailor(formData);
 
-      setTailoredResume(response.data.data);
-      setAtsScore(response.data.atsScore);
+      setTailoredResume(response.data);
+      setAtsScore(response.atsScore);
       await refreshWallet();
       setStep(3); // Result step
     } catch (err) {
@@ -128,12 +131,8 @@ export default function ResumeTailorPage() {
       description: 'We parse your resume, match it to the job description, and optimize it for ATS.',
       creditCost: pricing.creditCost,
       cashPrice: pricing.cashPriceUsd,
-      onPayWithCredits: () => {
-        performTailor();
-      },
-      onPayAlaCarte: (paidOrderId) => {
-        performTailor(paidOrderId);
-      },
+      onPayWithCredits: () => performTailor(),
+      onPayAlaCarte: (paidOrderId) => performTailor(paidOrderId),
     });
   };
 

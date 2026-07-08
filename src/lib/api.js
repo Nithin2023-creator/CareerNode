@@ -12,10 +12,11 @@ const getAuthHeaders = (extraHeaders = {}) => {
 
 export const createApiClient = (baseUrl) => {
   async function request(path, options = {}) {
+    const { unwrap = true, ...fetchOptions } = options;
     let response;
     try {
-      const headers = getAuthHeaders(options.headers);
-      response = await fetch(`${baseUrl}${path}`, { ...options, headers });
+      const headers = getAuthHeaders(fetchOptions.headers);
+      response = await fetch(`${baseUrl}${path}`, { ...fetchOptions, headers });
     } catch {
       throw new Error('Cannot reach the server. Is the backend running?');
     }
@@ -34,17 +35,27 @@ export const createApiClient = (baseUrl) => {
       throw new Error(message);
     }
 
+    if (!unwrap) return payload;
     return payload?.data ?? payload;
   }
 
   return {
-    get: (path) => request(path),
-    postJson: (path, body) => request(path, { method: 'POST', headers: jsonHeaders, body: JSON.stringify(body) }),
-    patchJson: (path, body) =>
-      request(path, { method: 'PATCH', headers: jsonHeaders, body: JSON.stringify(body || {}) }),
-    postForm: (path, formData) => request(path, { method: 'POST', body: formData }),
-    del: (path) => request(path, { method: 'DELETE' }),
-    put: (path, body) => request(path, { method: 'PUT', headers: jsonHeaders, body: JSON.stringify(body) })
+    request,
+    get: (path, options) => request(path, options),
+    postJson: (path, body, options) =>
+      request(path, { method: 'POST', headers: jsonHeaders, body: JSON.stringify(body), ...options }),
+    patchJson: (path, body, options) =>
+      request(path, {
+        method: 'PATCH',
+        headers: jsonHeaders,
+        body: JSON.stringify(body || {}),
+        ...options,
+      }),
+    postForm: (path, formData, options) =>
+      request(path, { method: 'POST', body: formData, ...options }),
+    del: (path, options) => request(path, { method: 'DELETE', ...options }),
+    put: (path, body, options) =>
+      request(path, { method: 'PUT', headers: jsonHeaders, body: JSON.stringify(body), ...options }),
   };
 };
 
@@ -178,11 +189,12 @@ export const adminApi = {
 };
 
 // Resume Maker Endpoints
+// unwrap:false — resume documents have a `data` field; generic unwrap would strip _id/title.
 export const resumeApi = {
   list: () => api.get('/resumes'),
-  get: (id) => api.get(`/resumes/${id}`),
-  create: (body) => api.postJson('/resumes', body),
-  update: (id, body) => api.put(`/resumes/${id}`, body),
+  get: (id) => api.get(`/resumes/${id}`, { unwrap: false }),
+  create: (body) => api.postJson('/resumes', body, { unwrap: false }),
+  update: (id, body) => api.put(`/resumes/${id}`, body, { unwrap: false }),
   remove: (id) => api.del(`/resumes/${id}`),
   tailor: (formData) => api.postForm('/resumes/tailor', formData),
   score: (body) => api.postJson('/resumes/score', body),
