@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ResumePreview = React.forwardRef(({ data }, ref) => {
+const ResumePreview = React.forwardRef(({ data, exportSource = false }, ref) => {
   const {
     personalInfo = {},
     education = [],
@@ -14,8 +14,10 @@ const ResumePreview = React.forwardRef(({ data }, ref) => {
   return (
     <div 
       ref={ref} 
-      id="resume-preview"
-      className="bg-white text-black p-[0.5in] w-full min-h-[11in] shadow-[var(--shadow-soft)] mx-auto relative overflow-hidden"
+      id={exportSource ? 'resume-export-source' : 'resume-preview'}
+      className={`bg-white text-black p-[0.5in] w-full shadow-[var(--shadow-soft)] mx-auto relative ${
+        exportSource ? 'min-h-0 overflow-visible' : 'min-h-[11in] overflow-hidden'
+      }`}
       style={{
         fontFamily: "Georgia, 'Times New Roman', Times, serif",
         fontSize: "11pt",

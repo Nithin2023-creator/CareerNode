@@ -7,6 +7,7 @@ import ResumePreview from './ResumePreview';
 import AtsScoreCard from './AtsScoreCard';
 import '../../styles/resumePrint.css';
 import { useToast } from '../../lib/toast';
+import { downloadResumePdf } from '../../lib/resumePdfExport';
 import {
   PersonalInfoSection,
   EducationSection,
@@ -49,6 +50,7 @@ export default function ResumeEditor({
   const [isScoring, setIsScoring] = useState(false);
   
   const printRef = useRef(null);
+  const exportRef = useRef(null);
 
   // Pricing for the export action (dynamic from the catalog, with a fallback).
   const [pricing, setPricing] = useState({ creditCost: 2, cashPriceUsd: 3 });
@@ -113,12 +115,19 @@ export default function ResumeEditor({
   };
 
   // Runs the export against the backend (optionally redeeming a paid order),
-  // then saves progress and opens the print dialog.
+  // saves progress, then downloads a PDF from the full-size off-screen preview.
   const runExport = async (paidOrderId) => {
     await resumeApi.export({ mode, paidOrderId });
     await refreshWallet();
     const savedResume = await handleSave({ skipNavigate: true });
-    window.print();
+
+    if (!exportRef.current) {
+      throw new Error('Resume preview is not ready');
+    }
+
+    await downloadResumePdf(exportRef.current, title);
+    toast.success('PDF downloaded successfully');
+
     if (savedResume && onSaveComplete) {
       onSaveComplete(savedResume);
     }
@@ -244,6 +253,15 @@ export default function ResumeEditor({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Full-size off-screen copy used for PDF export (html2canvas needs no scale transform) */}
+      <div
+        aria-hidden="true"
+        className="fixed top-0 pointer-events-none"
+        style={{ left: '-10000px', width: '8.5in' }}
+      >
+        <ResumePreview data={data} ref={exportRef} exportSource />
       </div>
     </div>
   );
