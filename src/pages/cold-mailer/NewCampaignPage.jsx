@@ -104,6 +104,7 @@ export default function NewCampaignPage() {
       toast.error(err.message);
     } finally {
       setTestingConnection(false);
+      await fetchGmailStatus();
     }
   };
 

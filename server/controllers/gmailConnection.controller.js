@@ -3,20 +3,32 @@ const googleOAuthService = require('../services/googleOAuthService');
 const { encrypt, decrypt } = require('../utils/tokenCrypto');
 const httpError = require('http-errors');
 
+const VERIFY_TTL_MS = 5 * 60 * 1000;
+
+const buildStatusResponse = (connection) => ({
+  connected: connection.status === 'active',
+  email: connection.email,
+  status: connection.status,
+  connectedAt: connection.connectedAt,
+});
+
 const getStatus = async (req, res, next) => {
   try {
     const connection = await GmailConnection.findOne({ userId: req.user._id });
     if (!connection) {
       return res.json({ data: { connected: false } });
     }
-    res.json({
-      data: {
-        connected: connection.status === 'active',
-        email: connection.email,
-        status: connection.status,
-        connectedAt: connection.connectedAt,
-      },
-    });
+
+    const isStale =
+      !connection.lastVerifiedAt ||
+      Date.now() - connection.lastVerifiedAt.getTime() > VERIFY_TTL_MS;
+
+    if (connection.status === 'active' && isStale) {
+      const refreshToken = decrypt(connection.refreshTokenEnc);
+      await googleOAuthService.verifyConnection(connection, refreshToken);
+    }
+
+    res.json({ data: buildStatusResponse(connection) });
   } catch (err) {
     next(err);
   }
@@ -31,7 +43,7 @@ const connect = async (req, res, next) => {
     if (!tokens.refresh_token) {
       throw httpError(400, 'No refresh token received. Please fully disconnect from Google Account settings and try again.');
     }
-    
+
     const scopes = (tokens.scope || '').split(' ');
     if (!scopes.includes('https://www.googleapis.com/auth/gmail.send')) {
       throw httpError(400, 'gmail.send scope was not granted. Please allow sending email on your behalf.');
@@ -53,18 +65,12 @@ const connect = async (req, res, next) => {
         status: 'active',
         connectedAt: new Date(),
         lastUsedAt: new Date(),
+        lastVerifiedAt: new Date(),
       },
       { upsert: true, new: true }
     );
 
-    res.json({
-      data: {
-        connected: true,
-        email: connection.email,
-        status: connection.status,
-        connectedAt: connection.connectedAt,
-      },
-    });
+    res.json({ data: buildStatusResponse(connection) });
   } catch (err) {
     next(err);
   }
@@ -77,8 +83,8 @@ const disconnect = async (req, res, next) => {
       try {
         const decryptedToken = decrypt(connection.refreshTokenEnc);
         await googleOAuthService.revokeToken(decryptedToken);
-      } catch(e) {
-        console.error("Failed to revoke token, deleting anyway", e);
+      } catch (e) {
+        console.error('Failed to revoke token, deleting anyway', e);
       }
       await connection.deleteOne();
     }
@@ -94,11 +100,19 @@ const testConnection = async (req, res, next) => {
     if (!connection || connection.status !== 'active') {
       throw httpError(400, 'Gmail not connected or revoked');
     }
-    const client = googleOAuthService.getClient();
-    client.setCredentials({ refresh_token: decrypt(connection.refreshTokenEnc) });
-    await client.getAccessToken();
-    
-    res.json({ data: { success: true } });
+
+    const refreshToken = decrypt(connection.refreshTokenEnc);
+    const result = await googleOAuthService.verifyConnection(connection, refreshToken);
+
+    if (result.verified) {
+      return res.json({ data: { success: true } });
+    }
+
+    if (result.revoked) {
+      throw httpError(400, result.message);
+    }
+
+    throw httpError(500, 'Failed to verify Gmail connection: ' + result.message);
   } catch (err) {
     if (err.statusCode) return next(err);
     next(httpError(500, 'Failed to verify Gmail connection: ' + err.message));

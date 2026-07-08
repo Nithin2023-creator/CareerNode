@@ -24,4 +24,32 @@ const revokeToken = async (token) => {
   }
 };
 
-module.exports = { exchangeCodeForTokens, revokeToken, getClient };
+const isRevokedError = (err) => {
+  const message = err?.message || '';
+  return message.includes('invalid_grant');
+};
+
+const verifyConnection = async (connection, refreshToken) => {
+  const client = getClient();
+  try {
+    client.setCredentials({ refresh_token: refreshToken });
+    await client.getAccessToken();
+    connection.lastVerifiedAt = new Date();
+    await connection.save();
+    return { verified: true };
+  } catch (err) {
+    const message = err?.message || 'Unknown error';
+    if (isRevokedError(err)) {
+      connection.status = 'revoked';
+      await connection.save();
+      return {
+        verified: false,
+        revoked: true,
+        message: 'Gmail access was revoked. Please reconnect.',
+      };
+    }
+    return { verified: false, revoked: false, message };
+  }
+};
+
+module.exports = { exchangeCodeForTokens, revokeToken, getClient, verifyConnection };

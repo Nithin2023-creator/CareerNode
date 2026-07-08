@@ -32,6 +32,9 @@ const gmailConnectionSchema = new mongoose.Schema({
   lastUsedAt: {
     type: Date,
   },
+  lastVerifiedAt: {
+    type: Date,
+  },
 });
 
 const GmailConnection = mongoose.model('GmailConnection', gmailConnectionSchema);

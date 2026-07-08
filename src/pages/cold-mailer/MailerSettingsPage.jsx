@@ -57,6 +57,7 @@ export default function MailerSettingsPage() {
       toast.error(err.message);
     } finally {
       setTesting(false);
+      await fetchStatus();
     }
   };
 
