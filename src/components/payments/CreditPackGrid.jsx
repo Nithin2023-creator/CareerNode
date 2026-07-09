@@ -71,9 +71,9 @@ export default function CreditPackGrid({
         const isSelected =
           isSelectMode && (selectedPackId === packId || selectedPackId === pack.id);
 
-        const cardClasses = `bento-card bg-white relative flex flex-col items-center text-center border-2 transition-all ${
+        const cardClasses = `bento-card !overflow-visible bg-white relative flex flex-col items-center text-center border-2 transition-all ${
           compact ? 'p-3 sm:p-4' : 'p-8'
-        } ${
+        } ${pack.badge ? 'mt-4' : ''} ${
           isSelectMode
             ? isSelected
               ? 'border-[var(--color-accent-blue)] bg-[var(--color-accent-blue)]/5 ring-2 ring-[var(--color-accent-blue)]/20 cursor-pointer'

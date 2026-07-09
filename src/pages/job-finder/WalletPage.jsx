@@ -37,7 +37,7 @@ export default function WalletPage() {
       </div>
 
       {/* Membership Upsell Banner */}
-      {myPlan?.planId?.tier === 'free' && (
+      {false && myPlan?.planId?.tier === 'free' && (
         <div className="bento-card bg-[var(--color-accent-blue)]/5 border-2 border-[var(--color-accent-blue)]/30 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
           <div>
             <h3 className="font-display font-bold text-xl text-[var(--color-accent-blue)]">Get more value with Pro</h3>

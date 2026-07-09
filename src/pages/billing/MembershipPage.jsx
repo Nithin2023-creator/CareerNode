@@ -110,8 +110,10 @@ export default function MembershipPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map((plan) => {
+      <div className="grid grid-cols-1 gap-6 max-w-sm">
+        {plans
+          .filter((plan) => plan.tier === currentPlanTier)
+          .map((plan) => {
           const isCurrent = currentPlanTier === plan.tier;
           const isPendingThisPlan =
             isPendingAuth && String(myPlan?.pendingPlanId) === String(plan._id);
@@ -119,7 +121,7 @@ export default function MembershipPage() {
           return (
             <div
               key={plan._id}
-              className={`relative bento-card bg-white border-2 rounded-3xl p-6 flex flex-col shadow-[var(--shadow-soft)] hover:-translate-y-1 transition-all ${
+              className={`relative bento-card !overflow-visible bg-white border-2 rounded-3xl p-6 mt-4 flex flex-col shadow-[var(--shadow-soft)] hover:-translate-y-1 transition-all ${
                 isCurrent ? 'border-black shadow-[var(--shadow-lift)]' : 'border-black/10'
               }`}
             >

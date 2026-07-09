@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LogOut, User, ChevronsUpDown } from 'lucide-react';
+import { LogOut, User, ChevronsUpDown, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authApi, membershipApi } from '../../lib/api';
-import { clearWalletCache } from '../../context/WalletContext';
+import { clearWalletCache, useWallet } from '../../context/WalletContext';
 
 export default function UserMenu() {
   const [user, setUser] = useState(null);
@@ -11,6 +11,7 @@ export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const walletCtx = useWallet();
 
   useEffect(() => {
     const token = localStorage.getItem('cn_token');
@@ -130,6 +131,24 @@ export default function UserMenu() {
             </div>
 
             <div className="p-2">
+              {/* Wallet Balance */}
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate('/dashboard/job-finder/wallet');
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold tracking-wide rounded-[16px] hover:bg-black/5 transition-colors text-black"
+              >
+                <span className="flex items-center justify-center h-8 w-8 rounded-[10px] bg-[var(--color-accent-yellow)]/15 text-[var(--color-accent-yellow)] shrink-0">
+                  <Wallet className="w-4 h-4" />
+                </span>
+                <span className="flex-1 text-left">Wallet</span>
+                <span className="font-display font-bold text-sm text-black">
+                  {walletCtx?.wallet?.balance ?? 0}<span className="text-black/40 text-xs ml-0.5">c</span>
+                </span>
+              </button>
+
+              <div className="h-px bg-black/5 mx-3 my-1" />
               {user?.isAdmin && (
                 <button
                   onClick={() => {

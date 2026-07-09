@@ -19,6 +19,7 @@ dist-ssr
 server/.env
 server/.env.*
 !server/.env.example
+APIKey-prod.csv
 
 # Server uploads (user-generated CSVs / attachments)
 server/uploads
