@@ -65,7 +65,10 @@ async function createOrder({ userId, amount, orderType, referenceId, cartItems, 
 
   try {
     const response = await Cashfree.PGCreateOrder(request);
-    return { orderId: order._id, paymentSessionId: response.data.payment_session_id };
+    console.log('[Cashfree] PGCreateOrder raw response status:', response.status);
+    console.log('[Cashfree] PGCreateOrder response data:', JSON.stringify(response.data));
+    const paymentSessionId = response.data?.payment_session_id;
+    return { orderId: order._id, paymentSessionId };
   } catch (error) {
     await PaymentOrder.deleteOne({ _id: order._id });
     console.error('Cashfree order creation error:', error.response?.data || error.message);
