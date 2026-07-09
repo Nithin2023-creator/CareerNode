@@ -1,12 +1,18 @@
 const { Cashfree, CFEnvironment } = require('cashfree-pg');
 
-Cashfree.XClientId = process.env.CASHFREE_APP_ID;
-Cashfree.XClientSecret = process.env.CASHFREE_SECRET_KEY;
-Cashfree.XEnvironment = process.env.CASHFREE_ENV === 'PRODUCTION'
+const cashfreeInstance = new Cashfree();
+
+cashfreeInstance.XClientId = process.env.CASHFREE_APP_ID;
+cashfreeInstance.XClientSecret = process.env.CASHFREE_SECRET_KEY;
+cashfreeInstance.XEnvironment = process.env.CASHFREE_ENV === 'PRODUCTION'
   ? CFEnvironment.PRODUCTION
   : CFEnvironment.SANDBOX;
 
-const cashfreeInstance = new Cashfree();
+console.log('[Cashfree] Initialized:', {
+  env: process.env.CASHFREE_ENV,
+  appId: process.env.CASHFREE_APP_ID ? process.env.CASHFREE_APP_ID.substring(0, 8) + '...' : 'MISSING',
+  secret: process.env.CASHFREE_SECRET_KEY ? 'SET' : 'MISSING',
+});
 
 const verifyWebhookSignature = (signature, rawBody, timestamp) => {
   try {
@@ -22,3 +28,4 @@ module.exports = {
   Cashfree: cashfreeInstance,
   verifyWebhookSignature,
 };
+
