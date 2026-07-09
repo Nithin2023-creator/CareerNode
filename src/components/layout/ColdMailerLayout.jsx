@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, PenLine, Layers, Settings, Store, Package, ShoppingCart, Coins } from 'lucide-react';
+import { Plus, PenLine, Layers, Settings, Store, Package, ShoppingCart, Coins, Send, AlertTriangle, X } from 'lucide-react';
 import { BundleCartProvider, useBundleCart } from '../../pages/cold-mailer/BundleCartContext';
 import { useWallet } from '../../context/WalletContext';
 import BundleCartDrawer from '../cold-mailer/BundleCartDrawer';
+import { gmailConnectionApi } from '../../lib/api';
 
 const subNav = [
   { name: 'Quick Draft', to: '/dashboard/emailer', end: true, icon: PenLine },
@@ -20,6 +21,12 @@ function ColdMailerHeader() {
   const { cart } = useBundleCart();
   const { wallet } = useWallet();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [gmailStatus, setGmailStatus] = useState(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    gmailConnectionApi.getStatus().then(res => setGmailStatus(res)).catch(console.error);
+  }, [location.pathname]); // Refresh on navigation
 
   return (
     <div className="space-y-10">
@@ -45,6 +52,19 @@ function ColdMailerHeader() {
               <span className="font-bold">{wallet?.balance || 0}</span>
             </Link>
           </motion.div>
+
+          {gmailStatus?.connected && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.12 } }}>
+              <button 
+                onClick={() => setInfoModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--color-accent-yellow)]/10 text-yellow-800 border border-[var(--color-accent-yellow)]/30 rounded-full hover:bg-[var(--color-accent-yellow)]/20 transition-colors"
+                title="Daily Send Allowance"
+              >
+                <Send className="w-4 h-4" />
+                <span className="font-bold text-sm">Today's sends: {gmailStatus.sentToday || 0}/{gmailStatus.dailyLimit || 500}</span>
+              </button>
+            </motion.div>
+          )}
 
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15 } }}>
             <button 
@@ -99,6 +119,29 @@ function ColdMailerHeader() {
       </motion.div>
 
       <BundleCartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* Info Modal */}
+      {infoModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setInfoModalOpen(false)} />
+          <div className="bento-card bg-white w-full max-w-lg relative z-10 p-6 sm:p-8 flex flex-col shadow-2xl">
+            <button
+              onClick={() => setInfoModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 text-black/40 hover:text-black transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3 text-yellow-600 mb-4">
+              <AlertTriangle className="w-6 h-6" />
+              <h3 className="font-display text-2xl font-bold uppercase tracking-tight">Daily Cap</h3>
+            </div>
+            <p className="text-black/60 font-medium leading-relaxed mb-6">
+              Sending more than ~500 cold emails a day from one Gmail account sharply increases the chance of landing in spam folders and can get your account flagged — which hurts the responses you get from HRs. We cap daily sends to protect your deliverability.
+            </p>
+            <button onClick={() => setInfoModalOpen(false)} className="pill-btn w-full">GOT IT</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

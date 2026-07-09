@@ -28,6 +28,11 @@ const subscriptionSchema = new mongoose.Schema({
   newMatchesCount: { type: Number, default: 0 },
   lastScanAt: { type: Date, default: null },
   bookmarkedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'JobListing' }],
+  // Remembers the user's last-selected exact-match search criteria for this company.
+  matchFilters: {
+    location: { type: String, default: null },
+    experienceLevel: { type: String, default: null },
+  },
 }, { timestamps: true });
 
 // One active subscription per user per company

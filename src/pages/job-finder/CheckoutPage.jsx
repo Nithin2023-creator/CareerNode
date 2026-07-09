@@ -98,7 +98,7 @@ export default function CheckoutPage() {
           <h2 className="font-display text-2xl font-bold uppercase mb-6 border-b border-black/10 pb-4">Order Summary</h2>
           <div className="space-y-4">
             {cart.map(item => (
-              <div key={item.id} className="flex justify-between items-center bg-black/5 p-4 rounded-[24px]">
+              <div key={item.id} className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-black/5 p-4 rounded-[24px]">
                 <div className="flex items-center gap-4">
                   {item.logoUrl ? (
                     <img src={item.logoUrl} alt={item.name} className="h-10 w-10 rounded-full border border-black/10" />
@@ -112,7 +112,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="text-right">
                   <div className="font-display font-bold text-xl">{item.creditCost}c</div>
-                  <div className="text-xs font-bold text-black/40 uppercase">or ${item.alaCartePrice}</div>
+                  <div className="text-xs font-bold text-black/40 uppercase">or ₹{item.alaCartePrice}</div>
                 </div>
               </div>
             ))}
@@ -153,13 +153,13 @@ export default function CheckoutPage() {
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-black/60">
               <span>Items ({cart.length})</span>
               <span>
-                {paymentMethod === 'credits' ? `${totalCredits}c` : `$${rawTotalCash.toFixed(2)}`}
+                {paymentMethod === 'credits' ? `${totalCredits}c` : `₹${rawTotalCash.toFixed(2)}`}
               </span>
             </div>
             {paymentMethod === 'alacarte' && discountPercent > 0 && (
               <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-green-600">
                 <span>Pro Discount ({discountPercent}%)</span>
-                <span>-${(rawTotalCash * (discountPercent / 100)).toFixed(2)}</span>
+                <span>-₹{(rawTotalCash * (discountPercent / 100)).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-black/60 border-b border-black/10 pb-4">
@@ -169,7 +169,7 @@ export default function CheckoutPage() {
             <div className="flex justify-between items-center font-display text-4xl font-bold text-[var(--color-accent-blue)]">
               <span>Total</span>
               <span>
-                {paymentMethod === 'credits' ? `${totalCredits}c` : `$${totalCash}`}
+                {paymentMethod === 'credits' ? `${totalCredits}c` : `₹${totalCash}`}
               </span>
             </div>
           </div>

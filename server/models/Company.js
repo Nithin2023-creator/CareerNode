@@ -12,6 +12,9 @@ const companySchema = new mongoose.Schema({
   openRoles: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
   lastScrapedAt: { type: Date, default: null },
+  lastScrapeStatus: { type: String, enum: ['idle', 'running', 'success', 'failed'], default: 'idle' },
+  lastScrapeError: { type: String, default: null },
+  lastScrapeStats: { type: mongoose.Schema.Types.Mixed, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Company', companySchema);

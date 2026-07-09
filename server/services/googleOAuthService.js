@@ -2,10 +2,29 @@ const { OAuth2Client } = require('google-auth-library');
 
 const REDIRECT_URI = 'postmessage';
 
+class GoogleOAuthConfigError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'GoogleOAuthConfigError';
+  }
+}
+
 const getClient = () => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    const missing = [!clientId && 'GOOGLE_CLIENT_ID', !clientSecret && 'GOOGLE_CLIENT_SECRET']
+      .filter(Boolean)
+      .join(', ');
+    throw new GoogleOAuthConfigError(
+      `Server is missing required Google OAuth env var(s): ${missing}. Gmail connect cannot work until these are set and the server is restarted.`
+    );
+  }
+
   return new OAuth2Client({
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    clientId,
+    clientSecret,
     redirectUri: REDIRECT_URI,
   });
 };
@@ -84,4 +103,5 @@ module.exports = {
   verifyConnection,
   isRevokedError,
   isDecryptError,
+  GoogleOAuthConfigError,
 };

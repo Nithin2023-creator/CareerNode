@@ -95,7 +95,7 @@ export const EducationSection = ({ items, updateItems }) => {
                     <Input label="Institution" placeholder="University of Example" value={item.institution} onChange={(e) => updateItem(index, { institution: e.target.value })} />
                     <Input label="Degree" placeholder="B.S. Computer Science" value={item.degree} onChange={(e) => updateItem(index, { degree: e.target.value })} />
                     <Input label="Location" placeholder="City, State" value={item.location} onChange={(e) => updateItem(index, { location: e.target.value })} />
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Input label="Start Date" placeholder="Aug 2019" value={item.startDate} onChange={(e) => updateItem(index, { startDate: e.target.value })} />
                       <Input label="End Date" placeholder="May 2023" value={item.endDate} onChange={(e) => updateItem(index, { endDate: e.target.value })} />
                     </div>
@@ -204,7 +204,7 @@ export const ExperienceSection = ({ items, updateItems }) => {
                     <Input label="Company" placeholder="Google" value={item.company} onChange={(e) => updateItem(index, { company: e.target.value })} />
                     <Input label="Role" placeholder="Software Engineer" value={item.role} onChange={(e) => updateItem(index, { role: e.target.value })} />
                     <Input label="Location" placeholder="San Francisco, CA" value={item.location} onChange={(e) => updateItem(index, { location: e.target.value })} />
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Input label="Start Date" placeholder="Jan 2021" value={item.startDate} onChange={(e) => updateItem(index, { startDate: e.target.value })} />
                       <Input label="End Date" placeholder="Present" value={item.endDate} onChange={(e) => updateItem(index, { endDate: e.target.value })} />
                     </div>

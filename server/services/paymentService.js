@@ -2,11 +2,8 @@ const { Cashfree } = require('./cashfreeClient');
 const PaymentOrder = require('../models/PaymentOrder');
 const axios = require('axios');
 
-/** Convert USD catalog prices to INR for Cashfree (configurable rate). */
-const toInr = (usdAmount) => {
-  const rate = Number(process.env.USD_TO_INR_RATE) || 83;
-  return Math.round(Number(usdAmount) * rate * 100) / 100;
-};
+/** Catalog prices are already in INR; just round to 2 decimals for Cashfree. */
+const toInr = (amount) => Math.round(Number(amount) * 100) / 100;
 
 const getCashfreeHeaders = () => ({
   'x-client-id': process.env.CASHFREE_APP_ID,
@@ -33,7 +30,7 @@ function requirePaymentEnv() {
 
 /**
  * Creates a one-time payment order in Cashfree.
- * `amount` is in USD (catalog price); stored and charged in INR.
+ * `amount` is the catalog price, already in INR.
  */
 async function createOrder({ userId, amount, orderType, referenceId, cartItems, customerDetails }) {
   requirePaymentEnv();

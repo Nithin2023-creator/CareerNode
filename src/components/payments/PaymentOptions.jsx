@@ -95,7 +95,7 @@ export default function PaymentOptions({
 
           <div className="mt-4 pt-4 border-t border-black/10 flex justify-between items-center text-sm font-bold uppercase tracking-widest">
             <span className="text-black/40">Price</span>
-            <span className="text-black">${cashPrice}</span>
+            <span className="text-black">₹{cashPrice}</span>
           </div>
           <div className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-black/40">
             <ShieldCheck className="h-4 w-4" /> Secure checkout

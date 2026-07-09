@@ -149,7 +149,7 @@ export default function AdminMembershipPlansPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-black/40 mb-4">{plan.tier}</p>
 
             <div className="flex items-baseline gap-1 mb-4">
-              <span className="font-display text-4xl font-bold text-black">${plan.monthlyPrice}</span>
+              <span className="font-display text-4xl font-bold text-black">₹{plan.monthlyPrice}</span>
               <span className="text-black/40 font-bold">/mo</span>
             </div>
 
@@ -222,7 +222,7 @@ export default function AdminMembershipPlansPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">Monthly Price ($)</label>
+                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">Monthly Price (₹)</label>
                   <input
                     type="number"
                     step="0.01"

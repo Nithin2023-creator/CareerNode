@@ -24,4 +24,7 @@ router.delete('/:id', controller.deleteCampaign);
 router.get('/:id/status', controller.getCampaignStatus);
 router.patch('/:id/status', controller.updateCampaignStatus);
 
+router.get('/:id/send-checkout', controller.getSendCheckout);
+router.post('/:id/checkout/confirm', controller.confirmSendCheckout);
+
 module.exports = router;

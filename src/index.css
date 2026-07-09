@@ -24,9 +24,13 @@
   --radius-lg: 48px;
   --radius-pill: 999px;
   
+  --color-bg: var(--color-background);
+
   /* Shadows */
   --shadow-soft: 0 4px 20px rgba(0,0,0,.08);
   --shadow-lift: 0 20px 60px -15px rgba(0,0,0,.15);
+  --shadow-solid: 4px 4px 0px 0px rgba(0,0,0,1);
+  --shadow-solid-hover: 6px 6px 0px 0px rgba(0,0,0,1);
   
   /* Fonts */
   --font-display: 'Clash Display', sans-serif;

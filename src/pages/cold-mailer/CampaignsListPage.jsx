@@ -15,6 +15,7 @@ import {
 import { coldMailerApi, gmailConnectionApi } from '../../lib/api.js';
 import { useToast } from '../../lib/toast.jsx';
 import { CAMPAIGN_STATUS_STYLES, computeStats, formatDate, isGmailReady, isGmailRevoked } from './helpers.js';
+import SendCheckoutModal from '../../components/cold-mailer/SendCheckoutModal.jsx';
 
 export default function CampaignsListPage() {
   const toast = useToast();
@@ -23,6 +24,8 @@ export default function CampaignsListPage() {
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [gmailStatus, setGmailStatus] = useState(null);
+  const [checkoutModalId, setCheckoutModalId] = useState(null);
+  const [checkoutModalTitle, setCheckoutModalTitle] = useState('');
   const pollRef = useRef(null);
 
   const load = useCallback(
@@ -155,6 +158,7 @@ export default function CampaignsListPage() {
         const stats = computeStats(campaign.recipients);
         const isBusy = busyId === campaign._id;
         const badgeClass = CAMPAIGN_STATUS_STYLES[campaign.status] || 'bg-black/5 text-black';
+        const isCapped = campaign.status === 'Paused' && stats.pending > 0 && gmailStatus?.dailyRemaining === 0;
 
         return (
           <motion.div
@@ -210,21 +214,29 @@ export default function CampaignsListPage() {
             <div className="mt-auto flex flex-wrap gap-2">
               {(campaign.status === 'Draft' ||
                 campaign.status === 'Paused' ||
-                campaign.status === 'Stopped') && (
+                campaign.status === 'Stopped') && !isCapped && (
                 <button
                   disabled={isBusy || !isGmailReady(gmailStatus)}
-                  onClick={() =>
-                    runAction(
-                      campaign._id,
-                      campaign.status === 'Draft' ? 'send' : 'resume',
-                      campaign.status === 'Draft' ? 'Launch' : 'Resume'
-                    )
-                  }
+                  onClick={() => {
+                    setCheckoutModalId(campaign._id);
+                    setCheckoutModalTitle(campaign.title);
+                  }}
                   className="pill-btn !px-4 !py-2 text-sm flex items-center gap-1.5 disabled:opacity-50"
                   title={!isGmailReady(gmailStatus) ? (isGmailRevoked(gmailStatus) ? 'Reconnect Gmail first' : 'Connect Gmail first') : ''}
                 >
                   <Play className="h-4 w-4" /> {campaign.status === 'Draft' ? 'LAUNCH' : 'RESUME'}
                 </button>
+              )}
+
+              {(campaign.status === 'Draft' ||
+                campaign.status === 'Paused' ||
+                campaign.status === 'Stopped') && isCapped && (
+                <div 
+                  className="pill-badge bg-[var(--color-accent-yellow)]/20 text-yellow-800 border border-[var(--color-accent-yellow)]/30 !px-3 !py-1.5 flex items-center gap-2 cursor-help text-[11px]"
+                  title="You have reached your daily send limit. This campaign will resume once your allowance resets tomorrow."
+                >
+                  ⏳ Resumes after reset
+                </div>
               )}
 
               {campaign.status === 'Sending' && (
@@ -271,6 +283,15 @@ export default function CampaignsListPage() {
         );
       })}
       </div>
+      <SendCheckoutModal
+        isOpen={!!checkoutModalId}
+        onClose={() => setCheckoutModalId(null)}
+        campaignId={checkoutModalId}
+        campaignTitle={checkoutModalTitle}
+        onConfirmSuccess={async () => {
+          await load({ silent: true });
+        }}
+      />
     </div>
   );
 }

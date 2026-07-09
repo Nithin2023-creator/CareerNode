@@ -1,5 +1,6 @@
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
+const JobListing = require('../models/JobListing');
 const walletService = require('./walletService');
 const paymentService = require('./paymentService');
 const membershipService = require('./membershipService');
@@ -7,7 +8,7 @@ const httpError = require('http-errors');
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
-const mapSubscription = (sub, company) => ({
+const mapSubscription = (sub, company, newMatchesCount) => ({
   id: sub._id.toString(),
   companyId: sub.companyId.toString(),
   status: sub.status,
@@ -15,8 +16,9 @@ const mapSubscription = (sub, company) => ({
   expiresAt: sub.expiresAt,
   paymentMethod: sub.paymentMethod,
   pricePaid: sub.pricePaid,
-  newMatchesCount: sub.newMatchesCount,
+  newMatchesCount: newMatchesCount ?? sub.newMatchesCount,
   lastScanAt: sub.lastScanAt,
+  matchFilters: sub.matchFilters || null,
   company: company
     ? {
         id: company._id.toString(),
@@ -33,7 +35,24 @@ exports.listSubscriptions = async (userId) => {
   const companies = await Company.find({ _id: { $in: companyIds } }).lean();
   const companyMap = new Map(companies.map((c) => [c._id.toString(), c]));
 
-  return subs.map((sub) => mapSubscription(sub, companyMap.get(sub.companyId.toString())));
+  // One batch query across all of the user's subscribed companies (instead of a
+  // per-subscription count query in a loop) to compute "new since last scan" counts.
+  const jobs = await JobListing.find({ companyId: { $in: companyIds } })
+    .select('companyId scrapedAt')
+    .lean();
+  const jobsByCompany = new Map();
+  for (const job of jobs) {
+    const key = job.companyId.toString();
+    if (!jobsByCompany.has(key)) jobsByCompany.set(key, []);
+    jobsByCompany.get(key).push(job.scrapedAt);
+  }
+
+  return subs.map((sub) => {
+    const since = sub.lastScanAt || sub.purchasedAt;
+    const companyJobs = jobsByCompany.get(sub.companyId.toString()) || [];
+    const newMatchesCount = companyJobs.filter((scrapedAt) => new Date(scrapedAt) > new Date(since)).length;
+    return mapSubscription(sub, companyMap.get(sub.companyId.toString()), newMatchesCount);
+  });
 };
 
 exports.getSubscription = async (userId, subscriptionId) => {
@@ -148,4 +167,84 @@ exports.checkout = async (user, cartItems, paymentMethod) => {
   } else {
     throw httpError(400, 'Invalid payment method');
   }
+};
+
+async function loadOwnedSubscription(userId, subscriptionId) {
+  const sub = await Subscription.findOne({ _id: subscriptionId, userId });
+  if (!sub) throw httpError(404, 'Subscription not found');
+  return sub;
+}
+
+// Distinct values actually present in the DB for this company, so the frontend can offer
+// select dropdowns where every option is guaranteed to match something - no free text, no
+// AI, at query time.
+exports.getJobFilterOptions = async (userId, subscriptionId) => {
+  const sub = await loadOwnedSubscription(userId, subscriptionId);
+
+  const [locations, experienceLevels] = await Promise.all([
+    JobListing.distinct('location', { companyId: sub.companyId }),
+    JobListing.distinct('experienceLevel', { companyId: sub.companyId }),
+  ]);
+
+  return {
+    locations: locations.filter(Boolean).sort(),
+    experienceLevels: experienceLevels.filter(Boolean).sort(),
+  };
+};
+
+// Plain exact-match query against the stored, AI-cleaned parameters - no AI, no joins.
+exports.getJobsForSubscription = async (userId, subscriptionId, { location, experienceLevel } = {}) => {
+  const sub = await loadOwnedSubscription(userId, subscriptionId);
+
+  const filter = { companyId: sub.companyId };
+  if (location) filter.location = location;
+  if (experienceLevel) filter.experienceLevel = experienceLevel;
+
+  const jobs = await JobListing.find(filter).sort({ scrapedAt: -1 }).lean();
+
+  const since = sub.lastScanAt || sub.purchasedAt;
+  const bookmarkedIds = new Set((sub.bookmarkedJobs || []).map((id) => id.toString()));
+
+  const mapped = jobs.map((job) => ({
+    id: job._id.toString(),
+    title: job.title,
+    url: job.url,
+    location: job.location,
+    experienceLevel: job.experienceLevel,
+    employmentType: job.employmentType,
+    description: job.description,
+    tags: job.tags,
+    scrapedAt: job.scrapedAt,
+    isNew: since ? new Date(job.scrapedAt) > new Date(since) : true,
+    isBookmarked: bookmarkedIds.has(job._id.toString()),
+  }));
+
+  sub.lastScanAt = new Date();
+  await sub.save();
+
+  return mapped;
+};
+
+exports.updateMatchFilters = async (userId, subscriptionId, { location, experienceLevel } = {}) => {
+  const sub = await Subscription.findOneAndUpdate(
+    { _id: subscriptionId, userId },
+    { $set: { matchFilters: { location: location || null, experienceLevel: experienceLevel || null } } },
+    { new: true }
+  );
+  if (!sub) throw httpError(404, 'Subscription not found');
+  return { matchFilters: sub.matchFilters };
+};
+
+exports.toggleBookmark = async (userId, subscriptionId, jobId) => {
+  const sub = await loadOwnedSubscription(userId, subscriptionId);
+
+  const alreadyBookmarked = sub.bookmarkedJobs.some((id) => id.toString() === jobId.toString());
+  if (alreadyBookmarked) {
+    sub.bookmarkedJobs = sub.bookmarkedJobs.filter((id) => id.toString() !== jobId.toString());
+  } else {
+    sub.bookmarkedJobs.push(jobId);
+  }
+  await sub.save();
+
+  return { isBookmarked: !alreadyBookmarked };
 };

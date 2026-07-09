@@ -1,4 +1,6 @@
 const Company = require('../models/Company');
+const JobListing = require('../models/JobListing');
+const ScrapeRun = require('../models/ScrapeRun');
 const Bundle = require('../models/Bundle');
 const CreditPack = require('../models/CreditPack');
 const MembershipPlan = require('../models/MembershipPlan');
@@ -6,8 +8,8 @@ const User = require('../models/User');
 const WaitlistEntry = require('../models/WaitlistEntry');
 const BundlePurchase = require('../models/BundlePurchase');
 const Wallet = require('../models/Wallet');
-const JobListing = require('../models/JobListing');
-const scraperService = require('../services/scraper/scraperService');
+const scrapeRunner = require('../services/scraper/scrapeRunner');
+const scrapeLogBus = require('../services/scraper/scrapeLogBus');
 
 // Stats
 exports.getStats = async (req, res, next) => {
@@ -79,59 +81,121 @@ exports.deleteCompany = async (req, res, next) => {
   }
 };
 
+// Kicks off a background scrape run and returns immediately - the actual crawl runs
+// detached (see scrapeRunner.js), so this no longer blocks/times out the HTTP request.
+// Body: { force?: boolean } - bypasses the "already scanned today" skip rule.
 exports.scrapeCompany = async (req, res, next) => {
   try {
-    const company = await Company.findById(req.params.id);
-    if (!company) return res.status(404).json({ message: 'Company not found' });
-
-    // Trigger scraper
-    const result = await scraperService.scrapeCompany({
-      careersPageUrl: company.careersPageUrl,
-      companyName: company.name
+    const result = await scrapeRunner.startScrapeRun({
+      companyId: req.params.id,
+      trigger: 'manual',
+      force: !!req.body?.force,
     });
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    let jobsSaved = 0;
-    if (result.jobs && Array.isArray(result.jobs)) {
-      for (const job of result.jobs) {
-        // Map 'entry' -> 'Entry-Level', 'mid' -> 'Mid-Level', 'senior' -> 'Senior', etc.
-        let expLevel = 'Mid-Level';
-        if (job.experienceLevel) {
-          const lowerLevel = job.experienceLevel.toLowerCase();
-          if (lowerLevel.includes('entry')) expLevel = 'Entry-Level';
-          else if (lowerLevel.includes('senior')) expLevel = 'Senior';
-          else if (lowerLevel.includes('staff') || lowerLevel.includes('principal')) expLevel = 'Staff/Principal';
-          else if (lowerLevel.includes('manager') || lowerLevel.includes('director')) expLevel = 'Manager/Director';
-        }
+exports.getLatestScrapeRun = async (req, res, next) => {
+  try {
+    const run = await scrapeRunner.getLatestRun(req.params.id);
+    res.json({ data: run });
+  } catch (error) {
+    next(error);
+  }
+};
 
-        try {
-          await JobListing.findOneAndUpdate(
-            { companyId: company._id, url: job.url },
-            {
-              title: job.title,
-              location: job.location || 'Not specified',
-              experienceLevel: expLevel,
-              tags: job.tags || [],
-              sourceType: job.sourceType || 'generic',
-              atsProvider: job.atsProvider || null,
-              scrapedAt: job.scrapedAt || new Date(),
-            },
-            { upsert: true, new: true }
-          );
-          jobsSaved++;
-        } catch (err) {
-          console.error(`Failed to upsert job ${job.url}:`, err.message);
-        }
+exports.getCompanyJobs = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const [jobs, total] = await Promise.all([
+      JobListing.find({ companyId: req.params.id })
+        .sort({ scrapedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      JobListing.countDocuments({ companyId: req.params.id })
+    ]);
+
+    res.json({
+      data: {
+        jobs,
+        pagination: { page, limit, total }
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getCompanyLinkAudit = async (req, res, next) => {
+  try {
+    const [company, run] = await Promise.all([
+      Company.findById(req.params.id).select('name').lean(),
+      ScrapeRun.findOne({
+        companyId: req.params.id,
+        status: 'success',
+      })
+        .sort({ finishedAt: -1 })
+        .select('stats linkAudit finishedAt')
+        .lean(),
+    ]);
+
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
     }
 
-    const openRoles = await JobListing.countDocuments({ companyId: company._id });
+    res.json({
+      data: {
+        companyName: company.name,
+        runId: run?._id ?? null,
+        finishedAt: run?.finishedAt ?? null,
+        stats: run?.stats ?? null,
+        linkAudit: run?.linkAudit ?? null,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    company.lastScrapedAt = new Date();
-    company.openRoles = openRoles;
-    await company.save();
+// SSE stream of a company's current/most recent scrape run - replays whatever's already
+// buffered, then tails live lines, closing when the run finishes. Scraping-only logs, per
+// your call, not the whole backend's stdout.
+exports.streamScrapeLogs = async (req, res, next) => {
+  try {
+    const companyId = req.params.id;
 
-    // Make sure we pass back `stats` inside `data` if we want `res.stats` to unpack cleanly.
-    res.json({ data: { stats: { totalJobs: openRoles }, jobsSaved } });
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    const sendLine = (line) => res.write(`data: ${JSON.stringify({ line })}\n\n`);
+
+    for (const line of scrapeLogBus.getBuffered(companyId)) {
+      sendLine(line);
+    }
+
+    if (!scrapeRunner.isRunning(companyId)) {
+      res.write(`event: end\ndata: {}\n\n`);
+      return res.end();
+    }
+
+    const unsubscribeLine = scrapeLogBus.subscribe(companyId, sendLine);
+    const unsubscribeEnd = scrapeLogBus.onEnd(companyId, () => {
+      res.write(`event: end\ndata: {}\n\n`);
+      res.end();
+    });
+
+    req.on('close', () => {
+      unsubscribeLine();
+      unsubscribeEnd();
+    });
   } catch (error) {
     next(error);
   }

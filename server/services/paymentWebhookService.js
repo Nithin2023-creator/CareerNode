@@ -8,6 +8,8 @@ const Bundle = require('../models/Bundle');
 const CreditPack = require('../models/CreditPack');
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
+const GmailConnection = require('../models/GmailConnection');
+const { campaignService } = require('./campaignService');
 
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -133,6 +135,31 @@ async function handlePaymentSuccess(body) {
         purchasedAt: now,
         expiresAt,
       });
+    }
+  } else if (order.orderType === 'cold_mailer_send' && order.cartItems?.length) {
+    // Process the cold mailer send upfront payment
+    const { batchSize } = order.cartItems[0] || {};
+    if (batchSize) {
+      const connection = await GmailConnection.findOne({ userId: order.userId, status: 'active' });
+      if (connection) {
+        connection.sentToday = (connection.sentToday || 0) + batchSize;
+        connection.sentTodayDate = new Date();
+        await connection.save();
+      }
+      
+      const campaignId = order.referenceId;
+      if (campaignId) {
+        // Find campaign to see if it's draft (needs start) or paused/stopped (needs resume)
+        const Campaign = require('../models/Campaign');
+        const campaign = await Campaign.findOne({ _id: campaignId, userId: order.userId });
+        if (campaign) {
+          if (campaign.status === 'Draft') {
+            await campaignService.startCampaign(order.userId, campaignId, batchSize);
+          } else {
+            await campaignService.resumeCampaign(order.userId, campaignId, undefined, batchSize);
+          }
+        }
+      }
     }
   }
 

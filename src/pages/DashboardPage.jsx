@@ -31,7 +31,7 @@ export default function DashboardPage() {
       {/* Header with Marquee */}
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-end">
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight uppercase leading-[0.85]">
+          <h1 className="font-display text-4xl xs:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight uppercase leading-[0.85]">
             Welcome Back,<br/>Fresher.
           </h1>
           <div className="hidden md:block w-64 text-sm font-medium border-l border-black/10 pl-4">

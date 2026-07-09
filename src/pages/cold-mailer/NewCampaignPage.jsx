@@ -21,6 +21,7 @@ import { withMockFallback } from '../../lib/apiHelpers.js';
 import { useToast } from '../../lib/toast.jsx';
 import { useGmailAuth } from '../../lib/gmailAuth.js';
 import { STANDARD_FIELDS, TEMPLATE_TOKENS, standardizeRows, renderTemplate, isGmailReady, isGmailRevoked } from './helpers.js';
+import GoogleConnectPrepModal from '../../components/cold-mailer/GoogleConnectPrepModal.jsx';
 
 export default function NewCampaignPage() {
   const toast = useToast();
@@ -58,6 +59,7 @@ export default function NewCampaignPage() {
   const [checkingGmail, setCheckingGmail] = useState(true);
   const [testingConnection, setTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState(null);
+  const [showPrepModal, setShowPrepModal] = useState(false);
 
   const bodyRef = useRef(null);
   const connectingRef = useRef(false);
@@ -317,10 +319,12 @@ export default function NewCampaignPage() {
                     : 'bg-black/5 text-black/40'
               }`}
             >
-              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-white/20 text-[10px]">
+              <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-white/20 text-[10px] shrink-0">
                 {i < stepIndex ? <Check className="h-3 w-3" /> : i + 1}
               </span>
-              {label}
+              <span className={`whitespace-nowrap ${i === stepIndex ? 'block' : 'hidden sm:block'}`}>
+                {label}
+              </span>
             </div>
             {i < stepsList.length - 1 && <div className="h-px w-6 bg-black/15" />}
           </div>
@@ -509,7 +513,7 @@ export default function NewCampaignPage() {
                 <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
                   Google revoked CareerNode&apos;s permission to send on your behalf. Click below to reconnect.
                 </p>
-                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                <button onClick={() => setShowPrepModal(true)} className="pill-btn inline-flex items-center justify-center gap-2">
                   <PlugZap className="h-5 w-5" /> RECONNECT WITH GOOGLE
                 </button>
               </div>
@@ -520,7 +524,7 @@ export default function NewCampaignPage() {
                 <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
                   You need to authorize CareerNode to send emails on your behalf to launch campaigns.
                 </p>
-                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                <button onClick={() => setShowPrepModal(true)} className="pill-btn inline-flex items-center justify-center gap-2">
                   <PlugZap className="h-5 w-5" /> CONNECT WITH GOOGLE
                 </button>
               </div>
@@ -677,6 +681,12 @@ export default function NewCampaignPage() {
           </div>
         </motion.div>
       )}
+
+      <GoogleConnectPrepModal
+        isOpen={showPrepModal}
+        onClose={() => setShowPrepModal(false)}
+        onContinue={login}
+      />
     </div>
   );
 }

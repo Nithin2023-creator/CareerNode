@@ -17,7 +17,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-[var(--color-background)] text-black p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row">
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex justify-between items-center mb-4">
+      <div className="lg:hidden flex justify-between items-center mb-4 pt-[env(safe-area-inset-top)]">
         <div className="flex flex-col items-start gap-1">
           <span className="font-display font-bold text-2xl tracking-tight text-black leading-none uppercase">Career</span>
           <span className="font-display font-bold text-2xl tracking-tight text-white bg-black px-1.5 rounded-xl leading-none uppercase mt-1">Node.</span>
@@ -39,7 +39,7 @@ export default function AppLayout() {
       </div>
       
       {/* Main Content Area - The Inner Frame */}
-      <main className="flex-1 bg-white rounded-[32px] lg:rounded-[48px] ml-0 lg:ml-6 relative shadow-[var(--shadow-soft)] min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4rem)] overflow-x-auto overflow-y-visible">
+      <main className="flex-1 bg-white rounded-[32px] lg:rounded-[48px] ml-0 lg:ml-6 relative shadow-[var(--shadow-soft)] min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4rem)] overflow-y-visible">
         <div className="mx-auto w-full h-full">
           <AnimatePresence mode="wait">
             <motion.div

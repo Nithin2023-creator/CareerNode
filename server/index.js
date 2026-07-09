@@ -16,6 +16,8 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const { campaignService } = require('./services/campaignService');
 const { startMembershipRenewalJob } = require('./services/membershipRenewalJob');
+const scrapeRunner = require('./services/scraper/scrapeRunner');
+const { startScrapeScheduler } = require('./services/scraper/scrapeScheduler');
 
 const campaignRoutes = require('./routes/campaigns.routes');
 const csvImportRoutes = require('./routes/csvImports.routes');
@@ -34,15 +36,39 @@ const pricingRoutes = require('./routes/pricing.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Fail loudly on boot if Gmail OAuth (cold mailer) env vars are missing,
+// instead of discovering it later via a cryptic Google API error.
+const REQUIRED_GMAIL_ENV_VARS = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'TOKEN_ENCRYPTION_KEY'];
+const missingGmailEnvVars = REQUIRED_GMAIL_ENV_VARS.filter((key) => !process.env[key]);
+if (missingGmailEnvVars.length > 0) {
+  console.error(
+    `[Startup] WARNING: Missing env var(s) required for Gmail connection: ${missingGmailEnvVars.join(', ')}. ` +
+      `Cold mailer Gmail connect/send will fail until these are set in the server's .env file and the process is restarted.`
+  );
+}
+
+// Log GROQ_API_KEY status at boot so scraper AI-tagging issues are obvious.
+if (process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here') {
+  console.log(`[Startup] GROQ_API_KEY is configured (${process.env.GROQ_API_KEY.length} chars). AI tagging enabled.`);
+} else {
+  console.warn('[Startup] WARNING: GROQ_API_KEY is missing or placeholder. Scraper will use heuristic fallback tagging.');
+}
+
 connectDB().then(async () => {
   try {
     const recovered = await campaignService.recoverOrphanedCampaigns();
     if (recovered > 0) {
       console.log(`Recovered ${recovered} orphaned campaign(s) stuck in 'Sending' -> 'Paused'.`);
     }
+
+    const recoveredRuns = await scrapeRunner.recoverOrphanedRuns();
+    if (recoveredRuns > 0) {
+      console.log(`Recovered ${recoveredRuns} orphaned scrape run(s) stuck in 'running' -> 'failed'.`);
+    }
     
     // Start background jobs
     startMembershipRenewalJob();
+    startScrapeScheduler();
   } catch (error) {
     console.error('Failed to recover orphaned campaigns:', error.message);
   }

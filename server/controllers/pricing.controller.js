@@ -26,7 +26,7 @@ exports.checkoutAction = async (req, res, next) => {
 
     const { orderId, paymentSessionId } = await paymentService.createOrder({
       userId: req.user._id,
-      amount: entry.cashPriceUsd,
+      amount: entry.cashPriceInr,
       orderType: 'credit_action',
       referenceId: actionId,
       customerDetails: {

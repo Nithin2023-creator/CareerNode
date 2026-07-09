@@ -30,7 +30,7 @@ export default function ResumeTailorPage() {
   const [atsScore, setAtsScore] = useState(null);
   const [savedResumeId, setSavedResumeId] = useState(resumeId);
 
-  const [pricing, setPricing] = useState({ creditCost: 4, cashPriceUsd: 5 });
+  const [pricing, setPricing] = useState({ creditCost: 4, cashPriceInr: 5 });
   const CREDIT_COST = pricing.creditCost;
 
   useEffect(() => {
@@ -130,7 +130,7 @@ export default function ResumeTailorPage() {
       label: 'AI Resume Tailoring',
       description: 'We parse your resume, match it to the job description, and optimize it for ATS.',
       creditCost: pricing.creditCost,
-      cashPrice: pricing.cashPriceUsd,
+      cashPrice: pricing.cashPriceInr,
       onPayWithCredits: () => performTailor(),
       onPayAlaCarte: (paidOrderId) => performTailor(paidOrderId),
     });

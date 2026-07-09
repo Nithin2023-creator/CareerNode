@@ -39,7 +39,7 @@ export default function BundleProductCard({ bundle }) {
           <Users className="w-4 h-4 mr-2 text-[var(--color-accent-yellow)]" />
           {bundle.contactCount} HR Contacts
         </div>
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="flex flex-wrap gap-1.5 mt-2">
           {bundle.sampleTitles?.slice(0, 3).map((title, i) => (
             <span key={i} className="text-xs bg-black/5 px-2 py-1 rounded-full">
               {title}

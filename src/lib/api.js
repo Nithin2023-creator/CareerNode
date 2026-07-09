@@ -86,6 +86,8 @@ export const coldMailerApi = {
   deleteCampaign: (id) => api.del(`/campaigns/${id}`),
   // action: 'send' | 'pause' | 'stop' | 'resume' | 'retry-failed' | 'reset'
   changeStatus: (id, action, extra = {}) => api.patchJson(`/campaigns/${id}/status`, { action, ...extra }),
+  getSendCheckout: (id) => api.get(`/campaigns/${id}/send-checkout`),
+  confirmSendCheckout: (id, paymentMethod) => api.postJson(`/campaigns/${id}/checkout/confirm`, { paymentMethod }),
 
   importCsv: (formData) => api.postForm('/csv-imports', formData),
   cleanRows: (rows) => api.postJson('/csv-imports/clean-rows', { rows }),
@@ -147,11 +149,22 @@ export const jobFinderApi = {
   renewSubscription: (id) => jobFinderClient.postJson(`/subscriptions/${id}/renew`),
   cancelSubscription: (id) => jobFinderClient.postJson(`/subscriptions/${id}/cancel`),
 
+  // Exact-match job retrieval (main backend, real data) - the select dropdown options come
+  // from job-filters, the actual results from getSubscriptionJobs with those selections.
+  getJobFilterOptions: (subId) => api.get(`/subscriptions/${subId}/job-filters`),
+  getSubscriptionJobs: (subId, params = {}) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v))
+    ).toString();
+    return api.get(`/subscriptions/${subId}/jobs${query ? `?${query}` : ''}`);
+  },
+  updateMatchFilters: (subId, body) => api.patchJson(`/subscriptions/${subId}/match-filters`, body),
+
   // Notifications (stub API until migrated)
   listNotifications: () => jobFinderClient.get('/notifications'),
   markNotificationRead: (id) => jobFinderClient.postJson(`/notifications/${id}/read`),
 
-  toggleBookmark: (subId, jobId) => jobFinderClient.postJson(`/subscriptions/${subId}/jobs/${jobId}/bookmark`),
+  toggleBookmark: (subId, jobId) => api.postJson(`/subscriptions/${subId}/jobs/${jobId}/bookmark`, {}),
   getSettings: () => jobFinderClient.get('/settings'),
   updateSettings: (body) => jobFinderClient.put('/settings', body),
 };
@@ -163,7 +176,20 @@ export const adminApi = {
   createCompany: (body) => api.postJson('/admin/companies', body),
   updateCompany: (id, body) => api.patchJson(`/admin/companies/${id}`, body),
   deleteCompany: (id) => api.del(`/admin/companies/${id}`),
-  scrapeCompany: (id) => api.postJson(`/admin/companies/${id}/scrape`, {}),
+  scrapeCompany: (id, force = false) => api.postJson(`/admin/companies/${id}/scrape`, { force }),
+  getLatestScrapeRun: (id) => api.get(`/admin/companies/${id}/scrape-runs/latest`),
+  getCompanyJobs: (id, params) => {
+    const query = new URLSearchParams(
+      Object.fromEntries(Object.entries(params || {}).filter(([, v]) => v))
+    ).toString();
+    return api.get(`/admin/companies/${id}/jobs${query ? `?${query}` : ''}`);
+  },
+  getCompanyLinkAudit: (id) => api.get(`/admin/companies/${id}/scrape-link-audit`),
+  getScrapeLogsStreamUrl: (id) => {
+    const base = API_BASE_URL.replace(/\/$/, '');
+    const token = localStorage.getItem('cn_token') || '';
+    return `${base}/admin/companies/${id}/scrape-logs/stream?token=${encodeURIComponent(token)}`;
+  },
 
   listBundles: () => api.get('/admin/bundles'),
   createBundle: (body) => api.postJson('/admin/bundles', body),

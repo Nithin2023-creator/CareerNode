@@ -14,7 +14,7 @@ const paymentOrderSchema = new mongoose.Schema({
   },
   orderType: {
     type: String,
-    enum: ['wallet_topup', 'bundle', 'job_finder_checkout', 'credit_action'],
+    enum: ['wallet_topup', 'bundle', 'job_finder_checkout', 'credit_action', 'cold_mailer_send'],
     required: true,
   },
   referenceId: {

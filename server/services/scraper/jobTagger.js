@@ -2,6 +2,12 @@ const axios = require('axios');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
+// Smaller chunk size than before since jobs may now carry a full page of scraped text.
+const CHUNK_SIZE_WITH_TEXT = 5;
+const CHUNK_SIZE_TITLE_ONLY = 10;
+
+const EXPERIENCE_LEVELS = ['Entry-Level', 'Mid-Level', 'Senior', 'Staff/Principal', 'Manager/Director'];
+const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Not specified'];
 
 class JobTagger {
   isApiKeyConfigured() {
@@ -9,28 +15,41 @@ class JobTagger {
     return key && key !== 'your_groq_api_key_here';
   }
 
-  async tagJobs(jobs) {
-    if (!this.isApiKeyConfigured() || jobs.length === 0) {
-      console.warn('[JobTagger] GROQ_API_KEY not set or empty jobs array. Using mock heuristic tagging.');
+  /**
+   * Extracts strict, exact-match-able fields per job: experienceLevel and employmentType
+   * from a fixed vocabulary, a normalized location string, and a cleaned plain-text
+   * description - so downstream user filtering can do simple exact-match queries with no
+   * AI involved at query time.
+   */
+  async tagJobs(jobs, { logger = console } = {}) {
+    if (jobs.length === 0) {
+      logger.log('[JobTagger] No jobs to tag (empty array). Skipping.');
+      return [];
+    }
+
+    if (!this.isApiKeyConfigured()) {
+      logger.warn('[JobTagger] GROQ_API_KEY is not set. Using mock heuristic tagging for ' + jobs.length + ' job(s).');
       return this._mockTagJobs(jobs);
     }
 
-    const CHUNK_SIZE = 10;
+    const hasPageText = jobs.some((j) => j.pageText);
+    const chunkSize = hasPageText ? CHUNK_SIZE_WITH_TEXT : CHUNK_SIZE_TITLE_ONLY;
     const taggedJobs = [];
 
-    for (let i = 0; i < jobs.length; i += CHUNK_SIZE) {
-      const chunk = jobs.slice(i, i + CHUNK_SIZE);
+    for (let i = 0; i < jobs.length; i += chunkSize) {
+      const chunk = jobs.slice(i, i + chunkSize);
       const prompt = `
-      You are an AI Job Tagger. Your task is to tag the given list of jobs.
-      For each job, determine:
-      1. experienceLevel: Must be one of: "Entry-Level", "Mid-Level", "Senior", "Staff/Principal", "Manager/Director".
-      2. normalizedLocation: Clean up the location string (e.g., "Remote, US").
-      3. tags: An array of strings representing role families or features (e.g., ["Engineering", "Remote"]).
+      You are an AI job data extractor. For each job below, extract STRICT structured fields:
+      1. experienceLevel: exactly one of ${JSON.stringify(EXPERIENCE_LEVELS)}
+      2. employmentType: exactly one of ${JSON.stringify(EMPLOYMENT_TYPES)}
+      3. normalizedLocation: a clean, consistent location string (e.g. "Remote", "Bangalore, India", "San Francisco, CA"). If unclear, use "Not specified".
+      4. description: a clean plain-text summary of the job posting (roughly 200-500 words), based on the pageText provided if present; otherwise infer briefly from the title only.
+      5. tags: an array of strings representing role families/skills (e.g. ["Engineering", "Remote"]).
 
-      Data to tag:
-      ${JSON.stringify(chunk)}
+      Data to process (pageText, when present, was scraped from the job's own detail page or ATS API):
+      ${JSON.stringify(chunk.map((j) => ({ url: j.url, title: j.title, location: j.location, pageText: (j.pageText || '').slice(0, 4000) })))}
 
-      Return ONLY a valid JSON array of objects with keys: { "url", "experienceLevel", "normalizedLocation", "tags" }.
+      Return ONLY a valid JSON array of objects with keys: { "url", "experienceLevel", "employmentType", "normalizedLocation", "description", "tags" }.
       `;
 
       try {
@@ -62,8 +81,10 @@ class JobTagger {
             for (const job of chunk) {
                 const tagged = results.find(r => r.url === job.url);
                 if (tagged) {
-                    job.experienceLevel = tagged.experienceLevel || 'Mid-Level';
+                    job.experienceLevel = EXPERIENCE_LEVELS.includes(tagged.experienceLevel) ? tagged.experienceLevel : 'Mid-Level';
+                    job.employmentType = EMPLOYMENT_TYPES.includes(tagged.employmentType) ? tagged.employmentType : 'Not specified';
                     job.location = tagged.normalizedLocation || job.location;
+                    job.description = tagged.description || job.description || '';
                     job.tags = tagged.tags || [];
                 }
                 taggedJobs.push(job);
@@ -72,7 +93,7 @@ class JobTagger {
             throw new Error('Invalid response');
         }
       } catch (err) {
-        console.error('[JobTagger] AI tagging failed for chunk:', err.message);
+        logger.error('[JobTagger] AI tagging failed for chunk:', err.message);
         taggedJobs.push(...this._mockTagJobs(chunk));
       }
     }
@@ -89,9 +110,16 @@ class JobTagger {
       if (title.includes('manager') || title.includes('director')) exp = 'Manager/Director';
       if (title.includes('junior') || title.includes('intern') || title.includes('entry')) exp = 'Entry-Level';
 
+      let employmentType = 'Full-time';
+      if (title.includes('intern')) employmentType = 'Internship';
+      else if (title.includes('contract') || title.includes('contractor')) employmentType = 'Contract';
+      else if (title.includes('part-time') || title.includes('part time')) employmentType = 'Part-time';
+
       return {
         ...job,
         experienceLevel: exp,
+        employmentType,
+        description: job.description || (job.pageText || '').slice(0, 500),
         tags: (job.location || '').toLowerCase().includes('remote') ? ['Remote'] : []
       };
     });

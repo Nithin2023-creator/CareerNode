@@ -6,12 +6,12 @@ const pricingCatalog = {
   'resume-tailor': {
     label: 'AI Resume Tailoring',
     creditCost: 4,
-    cashPriceUsd: 5,
+    cashPriceInr: 5,
   },
   'resume-export': {
     label: 'Resume PDF Export',
     creditCost: 2,
-    cashPriceUsd: 3,
+    cashPriceInr: 3,
   },
 };
 

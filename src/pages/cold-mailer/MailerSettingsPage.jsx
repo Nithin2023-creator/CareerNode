@@ -5,6 +5,7 @@ import { gmailConnectionApi } from '../../lib/api.js';
 import { useGmailAuth } from '../../lib/gmailAuth.js';
 import { useToast } from '../../lib/toast.jsx';
 import { isGmailReady } from './helpers.js';
+import GoogleConnectPrepModal from '../../components/cold-mailer/GoogleConnectPrepModal.jsx';
 
 export default function MailerSettingsPage() {
   const toast = useToast();
@@ -13,6 +14,7 @@ export default function MailerSettingsPage() {
   const [error, setError] = useState(null);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState(null);
+  const [showPrepModal, setShowPrepModal] = useState(false);
   const connectingRef = useRef(false);
 
   const fetchStatus = async () => {
@@ -147,7 +149,7 @@ export default function MailerSettingsPage() {
                 <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
                   Google revoked CareerNode&apos;s permission to send on your behalf. Click below to reconnect.
                 </p>
-                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                <button onClick={() => setShowPrepModal(true)} className="pill-btn inline-flex items-center justify-center gap-2">
                   <PlugZap className="h-5 w-5" /> RECONNECT WITH GOOGLE
                 </button>
               </div>
@@ -168,7 +170,7 @@ export default function MailerSettingsPage() {
                 <p className="text-sm text-black/50 max-w-md mx-auto mb-6">
                   You need to authorize CareerNode to send emails on your behalf to launch campaigns.
                 </p>
-                <button onClick={() => login()} className="pill-btn inline-flex items-center justify-center gap-2">
+                <button onClick={() => setShowPrepModal(true)} className="pill-btn inline-flex items-center justify-center gap-2">
                   <PlugZap className="h-5 w-5" /> CONNECT WITH GOOGLE
                 </button>
               </div>
@@ -216,6 +218,12 @@ export default function MailerSettingsPage() {
           </button>
         </div>
       </motion.div>
+
+      <GoogleConnectPrepModal
+        isOpen={showPrepModal}
+        onClose={() => setShowPrepModal(false)}
+        onContinue={login}
+      />
     </div>
   );
 }

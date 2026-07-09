@@ -105,7 +105,7 @@ export default function AdminCreditPacksPage() {
             <h3 className="font-display text-2xl font-bold text-black mb-2">{pack.name}</h3>
             
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="font-display text-4xl font-bold text-black">${pack.price}</span>
+              <span className="font-display text-4xl font-bold text-black">₹{pack.price}</span>
             </div>
 
             <div className="bg-black/5 border border-black/10 p-4 rounded-xl mb-6">
@@ -147,7 +147,7 @@ export default function AdminCreditPacksPage() {
                   <input type="number" required value={formData.credits} onChange={e => setFormData({...formData, credits: Number(e.target.value)})} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-black font-medium focus:ring-2 focus:ring-black" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">Price ($)</label>
+                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">Price (₹)</label>
                   <input type="number" step="0.01" required value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-black font-medium focus:ring-2 focus:ring-black" />
                 </div>
               </div>

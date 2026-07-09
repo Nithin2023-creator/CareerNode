@@ -117,7 +117,7 @@ export default function AdminTransactionsPage() {
                     <td className="px-6 py-4 font-bold">{tx.bundleId?.name || 'Unknown Bundle'}</td>
                     <td className="px-6 py-4 uppercase text-[10px] font-bold tracking-widest text-black/60">{tx.paymentMethod}</td>
                     <td className="px-6 py-4 text-right font-bold">
-                      {tx.paymentMethod === 'credits' ? <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded border border-yellow-200">{tx.pricePaid} Cr</span> : `$${tx.pricePaid}`}
+                      {tx.paymentMethod === 'credits' ? <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded border border-yellow-200">{tx.pricePaid} Cr</span> : `₹${tx.pricePaid}`}
                     </td>
                   </tr>
                 ))

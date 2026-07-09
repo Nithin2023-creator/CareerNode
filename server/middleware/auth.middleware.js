@@ -4,11 +4,13 @@ const User = require('../models/User');
 const requireAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Native EventSource (used for the scrape-logs SSE stream) can't set custom headers,
+    // so fall back to a ?token= query param for that one use case.
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : req.query.token;
+    if (!token) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const token = authHeader.split(' ')[1];
     const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_development';
     
     const decoded = jwt.verify(token, jwtSecret);

@@ -44,6 +44,7 @@ export default function ResumeEditor({
   const [data, setData] = useState(initialData || DEFAULT_RESUME_DATA);
   const [title, setTitle] = useState(initialTitle);
   const [atsScore, setAtsScore] = useState(initialAtsScore);
+  const [mobileTab, setMobileTab] = useState('edit');
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -53,7 +54,7 @@ export default function ResumeEditor({
   const exportRef = useRef(null);
 
   // Pricing for the export action (dynamic from the catalog, with a fallback).
-  const [pricing, setPricing] = useState({ creditCost: 2, cashPriceUsd: 3 });
+  const [pricing, setPricing] = useState({ creditCost: 2, cashPriceInr: 3 });
   React.useEffect(() => {
     pricingApi
       .getCatalog()
@@ -154,7 +155,7 @@ export default function ResumeEditor({
       label: 'Export Resume PDF',
       description: 'Download an ATS-friendly PDF of your resume.',
       creditCost: pricing.creditCost,
-      cashPrice: pricing.cashPriceUsd,
+      cashPrice: pricing.cashPriceInr,
       onPayWithCredits: () => runExport(),
       onPayAlaCarte: (paidOrderId) => runExport(paidOrderId),
     });
@@ -211,9 +212,25 @@ export default function ResumeEditor({
         </div>
       )}
 
+      {/* Mobile Tab Toggle */}
+      <div className="flex xl:hidden gap-3 print:hidden">
+        <button
+          onClick={() => setMobileTab('edit')}
+          className={`${mobileTab === 'edit' ? 'pill-btn bg-black text-white' : 'pill-btn-secondary bg-white text-black'} flex-1 justify-center !px-5 !py-2.5 text-sm`}
+        >
+          EDIT
+        </button>
+        <button
+          onClick={() => setMobileTab('preview')}
+          className={`${mobileTab === 'preview' ? 'pill-btn bg-black text-white' : 'pill-btn-secondary bg-white text-black'} flex-1 justify-center !px-5 !py-2.5 text-sm`}
+        >
+          PREVIEW
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 print:block print:w-full">
         {/* Left Side: Form Builder (Hidden when printing) */}
-        <div className="space-y-6 print:hidden pb-12">
+        <div className={`${mobileTab === 'edit' ? 'block' : 'hidden'} xl:block space-y-6 print:hidden pb-12`}>
           <PersonalInfoSection 
             data={data.personalInfo} 
             updateData={(info) => setData({ ...data, personalInfo: info })} 
@@ -245,11 +262,13 @@ export default function ResumeEditor({
         </div>
 
         {/* Right Side: Live Preview (Only this is visible when printing) */}
-        <div className="print:p-0 print:m-0 flex flex-col">
+        <div className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} xl:flex print:flex print:p-0 print:m-0 flex-col`}>
           <div className="bg-black/5 rounded-[32px] p-4 lg:p-8 overflow-hidden print:p-0 print:bg-transparent">
             {/* The actual preview component that gets printed */}
-            <div className="transform scale-[0.6] sm:scale-75 lg:scale-100 origin-top flex justify-center print:transform-none">
-              <ResumePreview data={data} ref={printRef} />
+            <div className="transform origin-top flex justify-center print:transform-none">
+              <div className="scale-[0.55] xs:scale-[0.65] sm:scale-75 md:scale-90 xl:scale-100 transform origin-top w-[794px]">
+                <ResumePreview data={data} ref={printRef} />
+              </div>
             </div>
           </div>
         </div>

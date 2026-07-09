@@ -38,3 +38,48 @@ exports.getOrderStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getJobFilterOptions = async (req, res, next) => {
+  try {
+    const options = await subscriptionService.getJobFilterOptions(req.user._id, req.params.id);
+    res.json({ data: options });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Accepts ?location=&experienceLevel= query params for the exact-match filter.
+exports.getSubscriptionJobs = async (req, res, next) => {
+  try {
+    const { location, experienceLevel } = req.query;
+    const jobs = await subscriptionService.getJobsForSubscription(req.user._id, req.params.id, {
+      location,
+      experienceLevel,
+    });
+    res.json({ data: jobs });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateMatchFilters = async (req, res, next) => {
+  try {
+    const { location, experienceLevel } = req.body;
+    const result = await subscriptionService.updateMatchFilters(req.user._id, req.params.id, {
+      location,
+      experienceLevel,
+    });
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.toggleJobBookmark = async (req, res, next) => {
+  try {
+    const result = await subscriptionService.toggleBookmark(req.user._id, req.params.id, req.params.jobId);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+};

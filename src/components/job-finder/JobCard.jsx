@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ExternalLink, ChevronDown } from 'lucide-react';
-import { getMatchTierColor } from '../../pages/job-finder/helpers';
 
-export default function JobCard({ job, onToggleBookmark, compact = false }) {
+export default function JobCard({ job, companyName, onToggleBookmark, compact = false }) {
   const [expanded, setExpanded] = useState(false);
 
   // If compact is true, we display a denser version of the card
@@ -11,16 +10,19 @@ export default function JobCard({ job, onToggleBookmark, compact = false }) {
     <div className={`bg-white/50 backdrop-blur-sm border border-black/5 rounded-[32px] hover:-translate-y-1 hover:shadow-[var(--shadow-soft)] transition-all flex flex-col ${compact ? 'p-5' : 'p-6 md:p-8'}`}>
       <div className="flex justify-between items-start mb-4 gap-4">
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <span className={`pill-badge ${getMatchTierColor(job.matchTier)}`}>
-              {job.matchTier.replace('_', ' ').toUpperCase()} {job.matchScore ? `• ${job.matchScore}%` : ''}
-            </span>
+          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+            {/* No AI match scoring at query time (exact-match filters only) - a neutral pill
+                replaces the old matchTier badge. */}
+            <span className="pill-badge bg-black/5 text-black">Open Role</span>
+            {job.isNew && (
+              <span className="pill-badge bg-[var(--color-accent-blue)]/10 text-[var(--color-accent-blue)]">New</span>
+            )}
           </div>
           <h4 className="font-display text-2xl font-bold leading-tight text-black mb-1">
             {job.title}
           </h4>
           <p className="text-sm font-bold uppercase tracking-wide text-black/60">
-            {job.company} {job.location && `• ${job.location}`}
+            {(job.company || companyName)} {job.location && `• ${job.location}`}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -44,8 +46,8 @@ export default function JobCard({ job, onToggleBookmark, compact = false }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {job.employmentType && (
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {job.employmentType && job.employmentType !== 'Not specified' && (
           <span className="pill-badge bg-black/5 text-black">{job.employmentType}</span>
         )}
         {job.experienceLevel && (

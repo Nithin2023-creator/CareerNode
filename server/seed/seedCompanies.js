@@ -1,60 +1,58 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
+const Papa = require('papaparse');
 const Company = require('../models/Company');
-
-const seedCompanies = [
-  {
-    name: 'Stripe',
-    logoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100&h=100&fit=crop',
-    category: 'Fintech',
-    tier: 'premium',
-    description: 'Financial infrastructure platform for the internet.',
-    careersPageUrl: 'https://stripe.com/jobs',
-    creditCost: 15,
-    alaCartePrice: 19.99,
-    isActive: true
-  },
-  {
-    name: 'Vercel',
-    logoUrl: 'https://images.unsplash.com/photo-1661956602116-aa6865609028?w=100&h=100&fit=crop',
-    category: 'Developer Tools',
-    tier: 'standard',
-    description: 'Frontend cloud platform for developing faster.',
-    careersPageUrl: 'https://vercel.com/careers',
-    creditCost: 10,
-    alaCartePrice: 14.99,
-    isActive: true
-  },
-  {
-    name: 'OpenAI',
-    logoUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=100&h=100&fit=crop',
-    category: 'AI / ML',
-    tier: 'premium',
-    description: 'Creating safe artificial general intelligence that benefits all of humanity.',
-    careersPageUrl: 'https://openai.com/careers',
-    creditCost: 20,
-    alaCartePrice: 24.99,
-    isActive: true
-  }
-];
 
 async function seed() {
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/careernode');
     console.log('MongoDB Connected.');
 
-    let inserted = 0;
-    for (const company of seedCompanies) {
-      const exists = await Company.findOne({ name: company.name });
-      if (exists) {
-        console.log(`Skipping "${company.name}" — already exists.`);
-        continue;
+    const csvFilePath = path.join(__dirname, '../../companies.csv');
+    const csvFile = fs.readFileSync(csvFilePath, 'utf8');
+
+    const parsed = Papa.parse(csvFile, { header: true, skipEmptyLines: true });
+    
+    let processed = 0;
+    
+    for (const row of parsed.data) {
+      if (!row.name || !row.careerUrl) {
+          console.log(`Skipping invalid row (missing name or careerUrl): ${JSON.stringify(row)}`);
+          continue;
       }
-      await Company.create(company);
-      inserted++;
+      
+      const companyData = {
+        name: row.name.trim(),
+        careersPageUrl: row.careerUrl.trim(),
+        logoUrl: row.logoUrl ? row.logoUrl.trim() : '',
+        isActive: true, // Always active
+        description: `${row.name.trim()} is a leading global company offering exciting career opportunities across engineering, technology, and business functions.`,
+        category: 'Technology', // Provide a default category
+        alaCartePrice: 9,
+        creditCost: 10,
+      };
+
+      if (row.createdAt) companyData.createdAt = new Date(row.createdAt);
+      if (row.updatedAt) companyData.updatedAt = new Date(row.updatedAt);
+
+      let filter = { name: companyData.name };
+      if (row._id && mongoose.Types.ObjectId.isValid(row._id)) {
+        filter = { _id: row._id };
+        companyData._id = row._id;
+      }
+
+      await Company.findOneAndUpdate(
+        filter,
+        companyData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      
+      processed++;
     }
 
-    console.log(`Seeded ${inserted} new companies (${seedCompanies.length - inserted} skipped).`);
+    console.log(`Successfully seeded ${processed} companies from CSV.`);
 
     process.exit(0);
   } catch (error) {

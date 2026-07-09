@@ -16,6 +16,10 @@ router.post('/companies', adminController.createCompany);
 router.patch('/companies/:id', adminController.updateCompany);
 router.delete('/companies/:id', adminController.deleteCompany);
 router.post('/companies/:id/scrape', adminController.scrapeCompany);
+router.get('/companies/:id/scrape-runs/latest', adminController.getLatestScrapeRun);
+router.get('/companies/:id/scrape-logs/stream', adminController.streamScrapeLogs);
+router.get('/companies/:id/jobs', adminController.getCompanyJobs);
+router.get('/companies/:id/scrape-link-audit', adminController.getCompanyLinkAudit);
 
 // Bundles
 router.get('/bundles', adminController.listBundles);

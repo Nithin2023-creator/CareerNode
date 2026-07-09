@@ -153,7 +153,7 @@ export default function AdminBundlesPage() {
                 </td>
                 <td className="px-6 py-4">
                   <span className="block text-yellow-600 font-bold text-xs">{bundle.creditCost} Credits</span>
-                  <span className="text-xs text-black/60">${bundle.alaCartePrice} a la carte</span>
+                  <span className="text-xs text-black/60">₹{bundle.alaCartePrice} a la carte</span>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                   <button 
@@ -209,7 +209,7 @@ export default function AdminBundlesPage() {
                   <input type="number" required value={formData.creditCost} onChange={e => setFormData({...formData, creditCost: Number(e.target.value)})} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-black font-medium focus:ring-2 focus:ring-black" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">A la Carte Price ($)</label>
+                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">A la Carte Price (₹)</label>
                   <input type="number" step="0.01" required value={formData.alaCartePrice} onChange={e => setFormData({...formData, alaCartePrice: Number(e.target.value)})} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-black font-medium focus:ring-2 focus:ring-black" />
                 </div>
               </div>

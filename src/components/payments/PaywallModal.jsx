@@ -121,7 +121,7 @@ export default function PaywallModal({ config, onClose }) {
             <button
               onClick={close}
               disabled={busy}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 text-black/40 hover:text-black transition-colors z-20 disabled:opacity-40"
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 text-black/40 hover:text-black transition-colors z-20 disabled:opacity-40 min-h-11 min-w-11 flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
@@ -147,14 +147,14 @@ export default function PaywallModal({ config, onClose }) {
               />
             </div>
 
-            <div className="px-6 sm:px-8 py-5 border-t border-black/5 bg-black/[0.02] flex items-center justify-between gap-4">
+            <div className="px-6 sm:px-8 py-5 border-t border-black/5 bg-black/[0.02] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="font-display font-bold text-2xl">
-                {method === 'credits' ? `${creditCost}c` : `$${config?.cashPrice ?? 0}`}
+                {method === 'credits' ? `${creditCost}c` : `₹${config?.cashPrice ?? 0}`}
               </div>
               <button
                 onClick={handleConfirm}
                 disabled={busy || !canConfirm}
-                className="pill-btn bg-[var(--color-accent-blue)] text-white hover:bg-black disabled:opacity-50 flex items-center gap-2 text-sm sm:text-base"
+                className="pill-btn w-full sm:w-auto bg-[var(--color-accent-blue)] text-white hover:bg-black disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 {busy ? (
                   <span className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full" />

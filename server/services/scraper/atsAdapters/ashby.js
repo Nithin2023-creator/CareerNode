@@ -1,8 +1,9 @@
 const axios = require('axios');
+const stripHtml = require('../stripHtml');
 
 module.exports = {
   matches: (url) => url.includes('jobs.ashbyhq.com'),
-  fetchJobs: async (url) => {
+  fetchJobs: async (url, { logger = console } = {}) => {
     try {
       const u = new URL(url);
       const parts = u.pathname.split('/').filter(Boolean);
@@ -17,10 +18,11 @@ module.exports = {
         url: j.jobUrl,
         location: j.location || 'Not specified',
         sourceType: 'ats',
-        atsProvider: 'ashby'
+        atsProvider: 'ashby',
+        pageText: stripHtml(j.descriptionHtml || j.descriptionPlain || ''),
       }));
     } catch (err) {
-      console.error('[ATS:Ashby] Fetch failed:', err.message);
+      logger.error('[ATS:Ashby] Fetch failed:', err.message);
       return [];
     }
   }

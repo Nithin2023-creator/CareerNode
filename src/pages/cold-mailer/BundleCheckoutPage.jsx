@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBundleCart } from './BundleCartContext';
 import { useWallet } from '../../context/WalletContext';
 import { bundlesApi, membershipApi } from '../../lib/api';
-import { ArrowRight, ShieldCheck, Tag } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Tag, Users, Lock, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { openCashfreeCheckout, pollOrderStatus } from '../../lib/cashfree';
 import PaymentOptions from '../../components/payments/PaymentOptions';
@@ -87,6 +87,12 @@ export default function BundleCheckoutPage() {
 
   return (
     <div className="max-w-6xl mx-auto pb-24">
+      <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-black/40 mb-8">
+        <Link to="/dashboard/emailer/marketplace" className="hover:text-black transition-colors">Marketplace</Link>
+        <ChevronRight className="w-3 h-3" />
+        <span className="text-black">Checkout</span>
+      </div>
+
       <div className="mb-12">
         <h1 className="font-display text-5xl font-bold uppercase tracking-tight mb-4">Checkout</h1>
         <p className="text-xl text-black/60">Review your bundle selections and complete your purchase.</p>
@@ -103,14 +109,19 @@ export default function BundleCheckoutPage() {
             
             <div className="space-y-4">
               {cart.map(item => (
-                <div key={item._id} className="flex justify-between items-center p-4 bg-black/5 rounded-2xl">
-                  <div>
-                    <h3 className="font-bold text-lg">{item.name}</h3>
-                    <p className="text-sm text-black/60">{item.contactCount} HR Contacts • {item.category}</p>
+                <div key={item._id} className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-4 bg-black/5 rounded-2xl">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-[var(--color-accent-blue)]/10 text-[var(--color-accent-blue)] flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">{item.name}</h3>
+                      <p className="text-sm text-black/60 font-medium">{item.contactCount} HR Contacts • {item.category}</p>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold">{paymentMethod === 'credits' ? `${item.creditCost} cr` : `$${item.alaCartePrice}`}</div>
-                    {paymentMethod === 'credits' && <div className="text-xs text-black/40">${item.alaCartePrice} value</div>}
+                    <div className="font-bold">{paymentMethod === 'credits' ? `${item.creditCost} cr` : `₹${item.alaCartePrice}`}</div>
+                    {paymentMethod === 'credits' && <div className="text-xs text-black/40 font-bold uppercase tracking-wider">₹{item.alaCartePrice} value</div>}
                   </div>
                 </div>
               ))}
@@ -131,7 +142,11 @@ export default function BundleCheckoutPage() {
                 method={paymentMethod}
                 onMethodChange={setPaymentMethod}
                 onSelectedPackChange={setSelectedPack}
-                creditsHint="Deduct from your wallet balance"
+                creditsHint={
+                  <span className="flex items-center gap-1.5">
+                    Deduct from wallet <span className="bg-[var(--color-accent-yellow)] text-yellow-900 text-[10px] px-1.5 py-0.5 rounded-full uppercase tracking-wider font-bold">Recommended</span>
+                  </span>
+                }
               />
 
               {!canUseCredits && paymentMethod === 'credits' && myPlan?.planId?.tier === 'free' && (
@@ -148,7 +163,7 @@ export default function BundleCheckoutPage() {
               {paymentMethod === 'alacarte' && discountPercent > 0 && (
                 <div className="flex justify-between items-center text-green-600 font-bold text-sm tracking-wider uppercase">
                   <span>Pro Discount ({discountPercent}%)</span>
-                  <span>-${(rawTotalAlaCarte * (discountPercent / 100)).toFixed(2)}</span>
+                  <span>-₹{(rawTotalAlaCarte * (discountPercent / 100)).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between items-end">
@@ -157,7 +172,7 @@ export default function BundleCheckoutPage() {
                   {paymentMethod === 'credits' ? (
                     <span className="font-display text-4xl font-bold">{totalCredits} <span className="text-xl">cr</span></span>
                   ) : (
-                    <span className="font-display text-4xl font-bold">${totalAlaCarte}</span>
+                    <span className="font-display text-4xl font-bold">₹{totalAlaCarte}</span>
                   )}
                 </div>
               </div>
@@ -178,7 +193,6 @@ export default function BundleCheckoutPage() {
               className="bento-button w-full justify-between bg-[var(--color-accent-yellow)] text-black hover:bg-[var(--color-accent-yellow)]/90 py-5 text-xl disabled:opacity-50"
             >
               <span className="flex items-center">
-                <ShieldCheck className="mr-2 h-6 w-6" />
                 {processing
                   ? 'Processing...'
                   : paymentMethod === 'alacarte'
@@ -191,7 +205,9 @@ export default function BundleCheckoutPage() {
               </span>
               {!processing && <ArrowRight />}
             </button>
-            <p className="text-center text-xs text-black/40 mt-4 font-medium">Secure payment via Cashfree</p>
+            <div className="flex items-center justify-center gap-2 mt-5 text-xs text-black/40 font-bold uppercase tracking-widest">
+              <Lock className="w-3.5 h-3.5" /> Secured by Cashfree • Instant Delivery
+            </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 const axios = require('axios');
+const stripHtml = require('../stripHtml');
 
 module.exports = {
   matches: (url) => url.includes('jobs.lever.co'),
-  fetchJobs: async (url) => {
+  fetchJobs: async (url, { logger = console } = {}) => {
     try {
       const u = new URL(url);
       const parts = u.pathname.split('/').filter(Boolean);
@@ -28,10 +29,11 @@ module.exports = {
         url: j.hostedUrl || j.url,
         location: j.categories?.location || 'Not specified',
         sourceType: 'ats',
-        atsProvider: 'lever'
+        atsProvider: 'lever',
+        pageText: stripHtml(j.descriptionPlain || j.description || ''),
       }));
     } catch (err) {
-      console.error('[ATS:Lever] Fetch failed:', err.message);
+      logger.error('[ATS:Lever] Fetch failed:', err.message);
       return [];
     }
   }

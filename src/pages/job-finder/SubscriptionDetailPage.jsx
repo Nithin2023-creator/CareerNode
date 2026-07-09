@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Activity, CreditCard, Coins, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Clock, Activity, CreditCard, Coins, CheckCircle2, Filter, Loader2 } from 'lucide-react';
 import { jobFinderApi } from '../../lib/api';
 import { withMockFallback, getSubscriptionStatusColor, formatDate } from './helpers';
 import { mockSubscriptions, mockCompanies, mockJobs } from './mockData';
@@ -8,13 +8,18 @@ import ProgressPipeline from '../../components/job-finder/ProgressPipeline';
 import JobCard from '../../components/job-finder/JobCard';
 import { useToast } from '../../lib/toast';
 
+const ANY_VALUE = '';
+
 export default function SubscriptionDetailPage() {
   const { id } = useParams();
   const toast = useToast();
   const [subscription, setSubscription] = useState(null);
   const [company, setCompany] = useState(null);
   const [jobs, setJobs] = useState([]);
+  const [filterOptions, setFilterOptions] = useState({ locations: [], experienceLevels: [] });
+  const [filters, setFilters] = useState({ location: ANY_VALUE, experienceLevel: ANY_VALUE });
   const [loading, setLoading] = useState(true);
+  const [jobsLoading, setJobsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('new'); // new, all, saved
   const [renewing, setRenewing] = useState(false);
 
@@ -23,12 +28,15 @@ export default function SubscriptionDetailPage() {
       try {
         const sub = await withMockFallback(jobFinderApi.getSubscription(id), mockSubscriptions.find(s => s.id === id) || mockSubscriptions[0]);
         const comp = await withMockFallback(jobFinderApi.listMarketplaceCompanies(), mockCompanies).then(comps => comps.find(c => c.id === sub.companyId));
-        // Mock returning jobs for this sub
-        const subJobs = await withMockFallback(jobFinderApi.getCompanyJobs(sub.companyId), mockJobs.filter(j => j.subscriptionId === sub.id));
-        
+        const options = await withMockFallback(jobFinderApi.getJobFilterOptions(id), { locations: [], experienceLevels: [] });
+
         setSubscription(sub);
         setCompany(comp);
-        setJobs(subJobs || []);
+        setFilterOptions(options);
+        setFilters({
+          location: sub.matchFilters?.location || ANY_VALUE,
+          experienceLevel: sub.matchFilters?.experienceLevel || ANY_VALUE,
+        });
       } catch {
         toast.error('Failed to load subscription details');
       } finally {
@@ -37,6 +45,34 @@ export default function SubscriptionDetailPage() {
     };
     fetchDetail();
   }, [id, toast]);
+
+  const fetchJobs = async (activeFilters) => {
+    setJobsLoading(true);
+    try {
+      const subJobs = await withMockFallback(
+        jobFinderApi.getSubscriptionJobs(id, activeFilters),
+        mockJobs.filter(j => j.subscriptionId === id)
+      );
+      setJobs(subJobs || []);
+    } catch {
+      toast.error('Failed to load jobs');
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
+  // Fetch the initial (persisted-filter) job list once subscription details are loaded.
+  useEffect(() => {
+    if (!loading && subscription) {
+      fetchJobs(filters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, subscription]);
+
+  const handleApplyFilters = async () => {
+    await withMockFallback(jobFinderApi.updateMatchFilters(id, filters), { success: true });
+    fetchJobs(filters);
+  };
 
   const handleToggleBookmark = async (jobId) => {
     try {
@@ -132,6 +168,51 @@ export default function SubscriptionDetailPage() {
                 Last checked: {formatDate(subscription.lastScanAt)}. The engine monitors this company automatically.
               </p>
             </div>
+
+            {/* Exact-match filter bar: options come from real distinct DB values only,
+                so any selection is guaranteed to match something. */}
+            <div className="bg-black/5 p-6 rounded-[24px] mt-6">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-black/50 mb-4 flex items-center gap-2">
+                <Filter className="h-4 w-4" /> Filter Roles
+              </h3>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-1">Location</label>
+                  <select
+                    value={filters.location}
+                    onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                    className="w-full bg-white border border-black/10 rounded-xl px-4 py-2.5 text-sm font-medium text-black focus:ring-2 focus:ring-black"
+                  >
+                    <option value={ANY_VALUE}>Any Location</option>
+                    {filterOptions.locations.map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-1">Experience Level</label>
+                  <select
+                    value={filters.experienceLevel}
+                    onChange={(e) => setFilters(prev => ({ ...prev, experienceLevel: e.target.value }))}
+                    className="w-full bg-white border border-black/10 rounded-xl px-4 py-2.5 text-sm font-medium text-black focus:ring-2 focus:ring-black"
+                  >
+                    <option value={ANY_VALUE}>Any Experience</option>
+                    {filterOptions.experienceLevels.map(level => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={handleApplyFilters}
+                    disabled={jobsLoading}
+                    className="pill-btn bg-black text-white hover:bg-[var(--color-accent-blue)] w-full md:w-auto flex justify-center items-center gap-2 disabled:opacity-50"
+                  >
+                    {jobsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Job Feed */}
@@ -153,16 +234,21 @@ export default function SubscriptionDetailPage() {
             </div>
 
             <div className="p-6 md:p-8 space-y-4">
-              {filteredJobs.length === 0 ? (
+              {jobsLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-black/30" />
+                </div>
+              ) : filteredJobs.length === 0 ? (
                 <div className="text-center py-12 text-black/40">
                   <p className="font-bold uppercase tracking-widest text-sm mb-2">No jobs found</p>
-                  <p className="text-xs">We haven't found any roles matching your profile in this category yet.</p>
+                  <p className="text-xs">We haven't found any roles matching your filters in this category yet.</p>
                 </div>
               ) : (
                 filteredJobs.map(job => (
                   <JobCard 
                     key={job.id} 
                     job={job} 
+                    companyName={company.name}
                     onToggleBookmark={() => handleToggleBookmark(job.id)} 
                   />
                 ))

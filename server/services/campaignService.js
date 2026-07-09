@@ -2,6 +2,7 @@ const Campaign = require('../models/Campaign');
 const GmailConnection = require('../models/GmailConnection');
 const emailService = require('./emailService');
 const emailValidator = require('./emailValidator');
+const coldMailerPricing = require('../config/coldMailerPricing');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -48,9 +49,13 @@ const applyAbortState = async (campaign, campaignId, index, reason) => {
 /**
  * Runs the two-phase send pipeline (validate, then send) in the background.
  */
-const processEmails = async (campaign, campaignId, connection) => {
+const processEmails = async (campaign, campaignId, connection, batchSize) => {
+  let processedCount = 0;
+  
   // Phase 1: validate all pending email addresses.
   for (let i = 0; i < campaign.recipients.length; i++) {
+    if (batchSize !== undefined && processedCount >= batchSize) break;
+    
     const signal = activeCampaigns.get(campaignId.toString());
     if (signal?.aborted) {
       await applyAbortState(campaign, campaignId, i, signal.reason);
@@ -68,8 +73,12 @@ const processEmails = async (campaign, campaignId, connection) => {
     }
   }
 
+  processedCount = 0;
+
   // Phase 2: send to the remaining pending (valid) recipients.
   for (let i = 0; i < campaign.recipients.length; i++) {
+    if (batchSize !== undefined && processedCount >= batchSize) break;
+
     const signal = activeCampaigns.get(campaignId.toString());
     if (signal?.aborted) {
       await applyAbortState(campaign, campaignId, i, signal.reason);
@@ -114,6 +123,7 @@ const processEmails = async (campaign, campaignId, connection) => {
       recipient.failReason = result.error;
     }
 
+    processedCount++;
     campaign.lastProcessedIndex = i;
     await campaign.save();
 
@@ -137,12 +147,38 @@ const processEmails = async (campaign, campaignId, connection) => {
 
   const totalFailed = campaign.recipients.filter((r) => r.status === 'Failed').length;
   const totalInvalid = campaign.recipients.filter((r) => r.status === 'Invalid').length;
-  campaign.status = totalFailed > 0 || totalInvalid > 0 ? 'Partially Failed' : 'Completed';
+  const remainingPending = campaign.recipients.filter((r) => r.status === 'Pending').length;
+  
+  if (remainingPending > 0 && batchSize !== undefined && processedCount >= batchSize) {
+    campaign.status = 'Paused'; // Auto-pause when batch is complete
+    campaign.pausedAt = new Date();
+  } else {
+    campaign.status = totalFailed > 0 || totalInvalid > 0 ? 'Partially Failed' : 'Completed';
+  }
+  
   await campaign.save();
   activeCampaigns.delete(campaignId.toString());
 };
 
 const campaignService = {
+  async getDailySendRemaining(userId) {
+    const connection = await GmailConnection.findOne({ userId, status: 'active' });
+    if (!connection) return 0;
+    
+    const now = new Date();
+    // check if sentTodayDate is same day (in local/server time for simplicity)
+    const isSameDay = connection.sentTodayDate && 
+      connection.sentTodayDate.toDateString() === now.toDateString();
+      
+    if (!isSameDay) {
+      connection.sentToday = 0;
+      connection.sentTodayDate = now;
+      await connection.save();
+    }
+    
+    return Math.max(0, coldMailerPricing.dailySendLimit - (connection.sentToday || 0));
+  },
+
   async listCampaigns(userId) {
     return Campaign.find({ userId }).sort({ createdAt: -1 });
   },
@@ -228,7 +264,7 @@ const campaignService = {
    * Verify SMTP, flip status to Sending, and kick off background processing.
    * Returns the campaign document immediately (send runs asynchronously).
    */
-  async startCampaign(userId, id) {
+  async startCampaign(userId, id, batchSize) {
     const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status === 'Sending') throw httpError(400, 'Campaign is already sending');
@@ -246,7 +282,7 @@ const campaignService = {
     campaign.status = 'Sending';
     await campaign.save();
 
-    processEmails(campaign, id, connection).catch((err) => {
+    processEmails(campaign, id, connection, batchSize).catch((err) => {
       console.error('Background email processing error:', err);
       campaign.status = 'Partially Failed';
       campaign.save().catch(() => {});
@@ -284,7 +320,7 @@ const campaignService = {
     return campaign.save();
   },
 
-  async resumeCampaign(userId, id, startFromIndex) {
+  async resumeCampaign(userId, id, startFromIndex, batchSize) {
     const campaign = await Campaign.findOne({ _id: id, userId });
     if (!campaign) throw httpError(404, 'Campaign not found');
     if (campaign.status !== 'Paused' && campaign.status !== 'Stopped') {
@@ -306,7 +342,7 @@ const campaignService = {
       }
     }
 
-    return this.startCampaign(userId, id);
+    return this.startCampaign(userId, id, batchSize);
   },
 
   async resetCampaign(userId, id) {

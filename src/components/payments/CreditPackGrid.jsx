@@ -72,7 +72,7 @@ export default function CreditPackGrid({
           isSelectMode && (selectedPackId === packId || selectedPackId === pack.id);
 
         const cardClasses = `bento-card bg-white relative flex flex-col items-center text-center border-2 transition-all ${
-          compact ? 'p-4' : 'p-8'
+          compact ? 'p-3 sm:p-4' : 'p-8'
         } ${
           isSelectMode
             ? isSelected
@@ -97,14 +97,14 @@ export default function CreditPackGrid({
               </div>
             )}
 
-            <h3 className={`font-display font-bold uppercase ${compact ? 'text-lg mb-1' : 'text-2xl mb-2'}`}>
+            <h3 className={`font-display font-bold uppercase ${compact ? 'text-base sm:text-lg mb-1' : 'text-2xl mb-2'}`}>
               {pack.name}
             </h3>
-            <div className={`font-display font-bold flex items-center gap-1 ${compact ? 'text-3xl my-2' : 'text-5xl my-4'}`}>
+            <div className={`font-display font-bold flex items-center gap-1 ${compact ? 'text-2xl sm:text-3xl my-1 sm:my-2' : 'text-5xl my-4'}`}>
               {pack.credits}
-              <span className={`text-black/40 ${compact ? 'text-lg' : 'text-2xl'}`}>c</span>
+              <span className={`text-black/40 ${compact ? 'text-base sm:text-lg' : 'text-2xl'}`}>c</span>
             </div>
-            <p className={`font-bold text-black/50 ${compact ? 'text-sm mb-4' : 'text-xl mb-8'}`}>${pack.price}</p>
+            <p className={`font-bold text-black/50 ${compact ? 'text-xs sm:text-sm mb-3 sm:mb-4' : 'text-xl mb-8'}`}>₹{pack.price}</p>
 
             {!isSelectMode && (
               <button

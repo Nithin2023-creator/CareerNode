@@ -27,6 +27,8 @@ import AdminRoute from './components/auth/AdminRoute';
 import AdminLayout from './components/layout/AdminLayout';
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
 import AdminCompaniesPage from './pages/admin/AdminCompaniesPage';
+import AdminCompanyJobsPage from './pages/admin/AdminCompanyJobsPage';
+import CompanyScrapeLogsPage from './pages/admin/CompanyScrapeLogsPage';
 import AdminBundlesPage from './pages/admin/AdminBundlesPage';
 import AdminCreditPacksPage from './pages/admin/AdminCreditPacksPage';
 import AdminMembershipPlansPage from './pages/admin/AdminMembershipPlansPage';
@@ -72,10 +74,18 @@ function App() {
           {/* Auth Route */}
           <Route path="/login" element={<LoginPage />} />
 
+          {/* Standalone admin route (opened in its own tab via "See Terminal") - auth
+              guarded like the rest of /admin, but rendered without the AdminLayout sidebar */}
+          <Route
+            path="/admin/companies/:id/scrape-logs"
+            element={<AdminRoute><CompanyScrapeLogsPage /></AdminRoute>}
+          />
+
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<AdminOverviewPage />} />
             <Route path="companies" element={<AdminCompaniesPage />} />
+            <Route path="companies/:id/jobs" element={<AdminCompanyJobsPage />} />
             <Route path="bundles" element={<AdminBundlesPage />} />
             <Route path="credit-packs" element={<AdminCreditPacksPage />} />
             <Route path="membership-plans" element={<AdminMembershipPlansPage />} />

@@ -51,6 +51,14 @@ router.post('/subscribe', requireAuth, async (req, res, next) => {
     }
 
     if (plan.tier !== 'free') {
+      // Switching between paid tiers (or retrying while pending) must cancel any
+      // existing mandate first, otherwise the old one stays active in Cashfree
+      // and keeps auto-charging the customer alongside the new one.
+      if (membership.cfSubscriptionId) {
+        await paymentService.cancelSubscription(membership.cfSubscriptionId);
+        membership.cfSubscriptionId = null;
+      }
+
       const { cfSubscriptionId, paymentSessionId, authorizationLink } =
         await paymentService.createSubscription({
           userId: req.user._id,

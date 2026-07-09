@@ -2,6 +2,8 @@ const GmailConnection = require('../models/GmailConnection');
 const googleOAuthService = require('../services/googleOAuthService');
 const { encrypt, decrypt } = require('../utils/tokenCrypto');
 const httpError = require('http-errors');
+const { campaignService } = require('../services/campaignService');
+const coldMailerPricing = require('../config/coldMailerPricing');
 
 const VERIFY_TTL_MS = 5 * 60 * 1000;
 
@@ -66,6 +68,11 @@ const getEmailFromIdToken = (idToken) => {
 const mapGoogleError = (err, fallbackMessage) => {
   if (err.statusCode) return err;
 
+  if (err instanceof googleOAuthService.GoogleOAuthConfigError) {
+    console.error('Gmail OAuth config error:', err.message);
+    return httpError(500, 'Gmail is not configured on the server yet. Please contact support.');
+  }
+
   const googleError = err.response?.data?.error || '';
   const message =
     err.response?.data?.error_description ||
@@ -110,7 +117,16 @@ const getStatus = async (req, res, next) => {
     }
 
     await verifyActiveConnection(connection);
-    res.json({ data: buildStatusResponse(connection) });
+    const dailyRemaining = await campaignService.getDailySendRemaining(req.user._id);
+
+    res.json({
+      data: {
+        ...buildStatusResponse(connection),
+        sentToday: connection.sentToday || 0,
+        dailyRemaining,
+        dailyLimit: coldMailerPricing.dailySendLimit
+      }
+    });
   } catch (err) {
     next(err);
   }

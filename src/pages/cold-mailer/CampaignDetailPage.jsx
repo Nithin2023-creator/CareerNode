@@ -15,6 +15,7 @@ import { coldMailerApi, gmailConnectionApi, uploadUrl } from '../../lib/api.js';
 import { useToast } from '../../lib/toast.jsx';
 import { isMobileViewport } from '../../lib/viewport.js';
 import { CAMPAIGN_STATUS_STYLES, RECIPIENT_STATUS_STYLES, computeStats, formatDate, isGmailReady, isGmailRevoked } from './helpers.js';
+import SendCheckoutModal from '../../components/cold-mailer/SendCheckoutModal.jsx';
 
 const STAT_TILES = [
   { key: 'sent', label: 'Sent', color: 'text-emerald-600' },
@@ -34,6 +35,7 @@ export default function CampaignDetailPage() {
   const [busy, setBusy] = useState(false);
   const [gmailStatus, setGmailStatus] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const pollRef = useRef(null);
   const previewRef = useRef(null);
 
@@ -146,6 +148,7 @@ export default function CampaignDetailPage() {
   const badgeClass = CAMPAIGN_STATUS_STYLES[campaign.status] || 'bg-black/5 text-black';
   const canLaunch = ['Draft', 'Paused', 'Stopped'].includes(campaign.status);
   const hasFailed = stats.failed > 0;
+  const isCapped = campaign.status === 'Paused' && stats.pending > 0 && gmailStatus?.dailyRemaining === 0;
 
   return (
     <div className="space-y-6">
@@ -183,15 +186,23 @@ export default function CampaignDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {canLaunch && (
+            {canLaunch && !isCapped && (
               <button
                 disabled={busy || !isGmailReady(gmailStatus)}
-                onClick={() => runAction(campaign.status === 'Draft' ? 'send' : 'resume', campaign.status === 'Draft' ? 'Launch' : 'Resume')}
+                onClick={() => setCheckoutModalOpen(true)}
                 className="pill-btn !px-5 !py-2.5 text-sm flex items-center gap-1.5 disabled:opacity-50"
                 title={!isGmailReady(gmailStatus) ? (isGmailRevoked(gmailStatus) ? 'Reconnect Gmail first' : 'Connect Gmail first') : ''}
               >
                 <Play className="h-4 w-4" /> {campaign.status === 'Draft' ? 'LAUNCH' : 'RESUME'}
               </button>
+            )}
+            {canLaunch && isCapped && (
+              <div 
+                className="pill-badge bg-[var(--color-accent-yellow)]/20 text-yellow-800 border border-[var(--color-accent-yellow)]/30 !px-4 !py-2 flex items-center gap-2 cursor-help"
+                title="You have reached your daily send limit. This campaign will resume once your allowance resets tomorrow."
+              >
+                ⏳ Resumes after your daily allowance resets
+              </div>
             )}
             {campaign.status === 'Sending' && (
               <>
@@ -395,6 +406,16 @@ export default function CampaignDetailPage() {
           </div>
         </div>
       </div>
+      <SendCheckoutModal
+        isOpen={checkoutModalOpen}
+        onClose={() => setCheckoutModalOpen(false)}
+        campaignId={id}
+        campaignTitle={campaign.title}
+        onConfirmSuccess={async (updatedCampaign) => {
+          if (updatedCampaign) setCampaign(updatedCampaign);
+          await load({ silent: true });
+        }}
+      />
     </div>
   );
 }

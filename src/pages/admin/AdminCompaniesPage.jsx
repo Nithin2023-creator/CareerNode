@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { adminApi } from '../../lib/api';
-import { Loader2, Plus, Edit2, Trash2, RefreshCw } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, RefreshCw, Terminal, AlertTriangle, List } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useToast } from '../../lib/toast';
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isScraping, setIsScraping] = useState({});
+  const [skippedToday, setSkippedToday] = useState({});
   const toast = useToast();
-  
+  const pollTimers = useRef({});
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState(null);
@@ -19,6 +22,9 @@ export default function AdminCompaniesPage() {
 
   useEffect(() => {
     fetchCompanies();
+    return () => {
+      Object.values(pollTimers.current).forEach(clearInterval);
+    };
   }, []);
 
   const fetchCompanies = async () => {
@@ -32,16 +38,49 @@ export default function AdminCompaniesPage() {
     }
   };
 
-  const handleScrape = async (id) => {
-    setIsScraping(prev => ({ ...prev, [id]: true }));
+  // Polls the run status every ~2s instead of blocking on the (potentially long) scrape -
+  // the request already returned immediately with a running/skipped status.
+  const pollRunStatus = (id) => {
+    if (pollTimers.current[id]) return;
+    pollTimers.current[id] = setInterval(async () => {
+      try {
+        const run = await adminApi.getLatestScrapeRun(id);
+        if (!run || run.status !== 'running') {
+          clearInterval(pollTimers.current[id]);
+          delete pollTimers.current[id];
+          setIsScraping((prev) => ({ ...prev, [id]: false }));
+          if (run?.status === 'success') {
+            toast.success(`Scraped successfully. Found ${run.stats?.totalJobs ?? 0} job(s).`);
+          } else if (run?.status === 'failed') {
+            toast.error(run.error || 'Scrape failed');
+          }
+          fetchCompanies();
+        }
+      } catch {
+        clearInterval(pollTimers.current[id]);
+        delete pollTimers.current[id];
+        setIsScraping((prev) => ({ ...prev, [id]: false }));
+      }
+    }, 2000);
+  };
+
+  const handleScrape = async (id, force = false) => {
+    setIsScraping((prev) => ({ ...prev, [id]: true }));
     try {
-      const res = await adminApi.scrapeCompany(id);
-      toast.success(`Scraped successfully. Found ${res.stats.totalJobs} jobs.`);
-      fetchCompanies(); // refresh to update openRoles count
+      const res = await adminApi.scrapeCompany(id, force);
+      if (res.status === 'skipped') {
+        setIsScraping((prev) => ({ ...prev, [id]: false }));
+        setSkippedToday((prev) => ({ ...prev, [id]: true }));
+        toast.info('Already scanned today. Click "Force Rescan" to override.');
+        return;
+      }
+      setSkippedToday((prev) => ({ ...prev, [id]: false }));
+      if (res.status === 'running') {
+        pollRunStatus(id);
+      }
     } catch (err) {
+      setIsScraping((prev) => ({ ...prev, [id]: false }));
       toast.error(err.message || 'Scrape failed');
-    } finally {
-      setIsScraping(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -89,6 +128,10 @@ export default function AdminCompaniesPage() {
     } catch (err) {
       toast.error(err.message || 'Save failed');
     }
+  };
+
+  const openScrapeLogs = (id) => {
+    window.open(`/admin/companies/${id}/scrape-logs`, '_blank');
   };
 
   if (loading) {
@@ -148,19 +191,63 @@ export default function AdminCompaniesPage() {
                   <td className="px-6 py-4 font-mono text-xs max-w-[200px] truncate" title={company.careersPageUrl}>
                     {company.careersPageUrl}
                   </td>
-                  <td className="px-6 py-4 text-center">{company.openRoles}</td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="font-bold">{company.openRoles}</div>
+                    {company.lastScrapeStats && company.lastScrapeStats.linksFound !== undefined && (
+                      <div className="text-[9px] font-mono text-black/40 mt-1" title="Scrape Funnel: Found → Accepted → Saved">
+                        {company.lastScrapeStats.linksFound} → {company.lastScrapeStats.linksAccepted} → {company.lastScrapeStats.jobsSaved ?? company.lastScrapeStats.totalJobs}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-black/40 text-xs">
                     {company.lastScrapedAt ? new Date(company.lastScrapedAt).toLocaleString() : 'Never'}
+                    {company.lastScrapeStatus === 'failed' && (
+                      <span
+                        title={company.lastScrapeError || 'Scrape failed'}
+                        className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-red-100 text-red-600 border border-red-200"
+                      >
+                        <AlertTriangle className="w-3 h-3" /> Failed
+                      </span>
+                    )}
+                    {company.lastScrapeStatus === 'running' && (
+                      <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-blue-100 text-blue-600 border border-blue-200">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Running
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
+                    <Link
+                      to={`/admin/companies/${company._id}/jobs`}
+                      title="Company Jobs"
+                      className="inline-flex items-center justify-center p-1.5 bg-black/5 hover:bg-black/10 text-black border border-transparent hover:border-black/20 rounded-lg transition-all"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                    </Link>
+                    <button
+                      onClick={() => openScrapeLogs(company._id)}
+                      title="See Terminal"
+                      className="inline-flex items-center justify-center p-1.5 bg-black/5 hover:bg-black/10 text-black border border-transparent hover:border-black/20 rounded-lg transition-all"
+                    >
+                      <Terminal className="w-3.5 h-3.5" />
+                    </button>
                     <button 
-                      onClick={() => handleScrape(company._id)}
+                      onClick={() => handleScrape(company._id, false)}
                       disabled={isScraping[company._id]}
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-black/5 hover:bg-black/10 text-black border border-transparent hover:border-black/20 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
                     >
                       {isScraping[company._id] ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                       Scrape
                     </button>
+                    {skippedToday[company._id] && (
+                      <button
+                        onClick={() => handleScrape(company._id, true)}
+                        disabled={isScraping[company._id]}
+                        title="Bypasses the once-per-24h skip and scrapes right now"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border border-yellow-300 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                      >
+                        Force Rescan
+                      </button>
+                    )}
                     <button onClick={() => openModal(company)} className="p-1.5 text-black/40 hover:text-black transition-colors">
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -219,7 +306,7 @@ export default function AdminCompaniesPage() {
                   <input type="number" required value={formData.creditCost} onChange={e => setFormData({...formData, creditCost: Number(e.target.value)})} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-black font-medium focus:ring-2 focus:ring-black" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">A la Carte Price ($)</label>
+                  <label className="block text-xs font-bold text-black/60 uppercase tracking-widest mb-2">A la Carte Price (₹)</label>
                   <input type="number" step="0.01" required value={formData.alaCartePrice} onChange={e => setFormData({...formData, alaCartePrice: Number(e.target.value)})} className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-black font-medium focus:ring-2 focus:ring-black" />
                 </div>
               </div>

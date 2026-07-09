@@ -142,7 +142,7 @@ export default function MembershipPage() {
               <div className="mb-6 mt-2">
                 <h3 className="font-display text-2xl font-bold uppercase tracking-tight text-black">{plan.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="font-display text-4xl font-bold text-black">${plan.monthlyPrice}</span>
+                  <span className="font-display text-4xl font-bold text-black">₹{plan.monthlyPrice}</span>
                   <span className="text-black/50 font-medium">/mo</span>
                 </div>
               </div>
