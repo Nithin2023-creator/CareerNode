@@ -35,6 +35,9 @@
   /* Fonts */
   --font-display: 'Clash Display', sans-serif;
   --font-body: 'Satoshi', sans-serif;
+
+  /* Extra-narrow phones (375px) — between base and sm (640px) */
+  --breakpoint-xs: 23.4375rem;
 }
 
 @layer base {

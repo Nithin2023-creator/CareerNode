@@ -26,7 +26,7 @@ export default function PublicLayout() {
       {location.pathname === '/' && <SectionDotNav />}
       
       {/* Minimal Top Nav */}
-      <nav className="fixed top-0 w-full z-50 p-4 md:p-6 lg:px-8 lg:py-6 pointer-events-none">
+      <nav className="fixed top-0 w-full z-50 px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-6 md:pb-6 md:pt-[max(1.5rem,env(safe-area-inset-top))] lg:px-8 lg:pb-6 lg:pt-[max(1.5rem,env(safe-area-inset-top))] pointer-events-none">
         <div className="mx-auto flex justify-between items-center pointer-events-auto">
           {/* Logo */}
           <Link to="/" className="bg-white/80 backdrop-blur-md rounded-full px-4 py-2 sm:px-6 sm:py-3 hover:translate-y-[-2px] transition-all flex items-center gap-1 group shadow-[var(--shadow-soft)] min-w-0">

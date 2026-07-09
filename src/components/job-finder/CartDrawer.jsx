@@ -39,13 +39,14 @@ export default function CartDrawer({ isOpen, onClose }) {
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-[var(--color-background)] border-l border-black/10 shadow-2xl z-[101] flex flex-col"
           >
             {/* Header */}
-            <div className="p-6 border-b border-black/10 flex justify-between items-center bg-white">
+            <div className="p-6 pt-[max(1.5rem,env(safe-area-inset-top))] border-b border-black/10 flex justify-between items-center bg-white">
               <h2 className="font-display text-2xl font-bold uppercase flex items-center gap-2">
                 <ShoppingCart className="h-6 w-6" /> Your Cart
               </h2>
               <button 
                 onClick={onClose}
-                className="h-10 w-10 rounded-full border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-colors"
+                aria-label="Close cart"
+                className="min-h-11 min-w-11 rounded-full border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -93,7 +94,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 
             {/* Footer Summary */}
             {cart.length > 0 && (
-              <div className="p-6 bg-white border-t border-black/10 space-y-4">
+              <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-white border-t border-black/10 space-y-4">
                 <div className="flex justify-between items-center text-black/60 font-bold uppercase tracking-widest text-xs">
                   <span>Current Balance</span>
                   <span>{wallet.balance} Credits</span>

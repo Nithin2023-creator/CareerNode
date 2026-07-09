@@ -37,12 +37,16 @@ export default function BundleCartDrawer({ isOpen, onClose }) {
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-[var(--color-background)] border-l border-black/10 shadow-2xl z-50 flex flex-col"
           >
-            <div className="p-6 border-b border-black/10 flex justify-between items-center bg-white">
+            <div className="p-6 pt-[max(1.5rem,env(safe-area-inset-top))] border-b border-black/10 flex justify-between items-center bg-white">
               <h2 className="font-display text-2xl font-bold uppercase flex items-center">
                 <ShoppingCart className="mr-3" />
                 Your Cart
               </h2>
-              <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+              <button
+                onClick={onClose}
+                aria-label="Close cart"
+                className="min-h-11 min-w-11 flex items-center justify-center hover:bg-black/5 rounded-full transition-colors"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -83,7 +87,7 @@ export default function BundleCartDrawer({ isOpen, onClose }) {
             </div>
 
             {cart.length > 0 && (
-              <div className="p-6 bg-white border-t border-black/10">
+              <div className="p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-white border-t border-black/10">
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between items-center text-black/60">
                     <span>Current Balance</span>
