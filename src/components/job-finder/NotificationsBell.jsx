@@ -50,7 +50,7 @@ export default function NotificationsBell() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative overflow-visible shrink-0" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="h-10 w-10 md:h-12 md:w-12 rounded-full border border-black/10 bg-white hover:bg-black/5 flex items-center justify-center transition-colors relative"
@@ -64,17 +64,24 @@ export default function NotificationsBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 md:w-96 bg-white border border-black/10 rounded-[24px] shadow-[var(--shadow-lift)] overflow-hidden z-50 origin-top-right animate-in fade-in zoom-in-95 duration-200">
-          <div className="p-4 border-b border-black/10 flex justify-between items-center bg-black/5">
-            <h3 className="font-display font-bold uppercase tracking-wide">Notifications</h3>
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllRead} className="text-xs font-bold text-black/40 hover:text-black flex items-center gap-1">
-                <Check className="h-3 w-3" /> MARK ALL READ
-              </button>
-            )}
-          </div>
+        <>
+          <div className="fixed inset-0 bg-black/20 z-[60] md:hidden backdrop-blur-sm" onClick={() => setIsOpen(false)} />
           
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className="fixed md:absolute bottom-0 left-0 right-0 md:bottom-auto md:top-full md:left-auto md:right-0 md:mt-2 w-full md:w-96 bg-white border-t md:border border-black/10 rounded-t-[32px] md:rounded-[24px] shadow-[var(--shadow-lift)] overflow-hidden z-[70] md:z-50 origin-top-right animate-in slide-in-from-bottom-full md:slide-in-from-top-2 md:fade-in md:zoom-in-95 duration-300 md:duration-200 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-0">
+            <div className="md:hidden flex justify-center py-3 bg-black/5 cursor-pointer" onClick={() => setIsOpen(false)}>
+              <div className="w-12 h-1.5 bg-black/20 rounded-full" />
+            </div>
+
+            <div className="p-4 border-b border-black/10 flex justify-between items-center bg-black/5">
+              <h3 className="font-display font-bold uppercase tracking-wide">Notifications</h3>
+              {unreadCount > 0 && (
+                <button onClick={handleMarkAllRead} className="text-xs font-bold text-black/40 hover:text-black flex items-center gap-1">
+                  <Check className="h-3 w-3" /> MARK ALL READ
+                </button>
+              )}
+            </div>
+            
+            <div className="max-h-[60vh] md:max-h-[400px] overflow-y-auto">
             {loading ? (
               <div className="p-8 text-center text-black/40 font-bold uppercase text-xs">Loading...</div>
             ) : notifications.length === 0 ? (
@@ -102,6 +109,7 @@ export default function NotificationsBell() {
             )}
           </div>
         </div>
+        </>
       )}
     </div>
   );

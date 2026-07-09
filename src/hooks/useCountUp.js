@@ -27,24 +27,29 @@ export function useCountUp(endValue, { duration = 2, delay = 0, suffix = "", pre
     }
 
     const obj = { val: 0 };
+    let tween;
     
-    const tween = gsap.to(obj, {
-      val: endValue,
-      duration,
-      delay,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: el,
-        start: "top bottom-=50px",
-        once: true
-      },
-      onUpdate: () => {
-        el.textContent = formatValue(obj.val);
-      }
-    });
+    // Defer creation to avoid miscalculating position during initial render (e.g. splash screens)
+    const timer = setTimeout(() => {
+      tween = gsap.to(obj, {
+        val: endValue,
+        duration,
+        delay,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 85%",
+          once: true
+        },
+        onUpdate: () => {
+          el.textContent = formatValue(obj.val);
+        }
+      });
+    }, 100);
 
     return () => {
-      tween.kill();
+      clearTimeout(timer);
+      if (tween) tween.kill();
     };
   }, [endValue, duration, delay, suffix, prefix]);
 

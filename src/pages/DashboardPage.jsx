@@ -30,29 +30,31 @@ export default function DashboardPage() {
     <div className="space-y-10">
       {/* Header with Marquee */}
       <div className="flex flex-col gap-6">
-        <div className="flex justify-between items-end">
-          <h1 className="font-display text-4xl xs:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight uppercase leading-[0.85]">
+        <div className="flex flex-col lg:flex-row justify-between lg:items-end gap-4 lg:gap-0">
+          <h1 className="min-w-0 font-display text-4xl xs:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight uppercase leading-[0.85]">
             Welcome Back,<br/>Fresher.
           </h1>
-          <div className="hidden md:block w-64 text-sm font-medium border-l border-black/10 pl-4">
+          <div className="hidden md:block w-64 text-sm font-medium border-l border-black/10 pl-4 shrink-0">
             Your career acceleration hub. Automated job finding, cold emails, and ATS resumes.
           </div>
         </div>
         
         {/* Marquee Ticker */}
-        <div className="bg-black/5 rounded-full overflow-hidden flex items-center py-3 relative">
-          <div className="marquee-track space-x-6 pl-6 text-black/70 font-bold tracking-widest text-sm uppercase whitespace-nowrap">
-            <span>🚀 12 NEW JOBS SCANNED TODAY</span>
-            <span>•</span>
-            <span>✨ 85% ATS MATCH RATE ACHIEVED</span>
-            <span>•</span>
-            <span>🔥 4 INTERVIEW TEMPLATES ADDED</span>
-            <span>•</span>
-            <span>🚀 12 NEW JOBS SCANNED TODAY</span>
-            <span>•</span>
-            <span>✨ 85% ATS MATCH RATE ACHIEVED</span>
-            <span>•</span>
-            <span>🔥 4 INTERVIEW TEMPLATES ADDED</span>
+        <div className="overflow-hidden w-full">
+          <div className="bg-black/5 rounded-full overflow-hidden flex items-center py-3 relative">
+            <div className="marquee-track space-x-6 pl-6 text-black/70 font-bold tracking-widest text-sm uppercase whitespace-nowrap">
+              <span>🚀 12 NEW JOBS SCANNED TODAY</span>
+              <span>•</span>
+              <span>✨ 85% ATS MATCH RATE ACHIEVED</span>
+              <span>•</span>
+              <span>🔥 4 INTERVIEW TEMPLATES ADDED</span>
+              <span>•</span>
+              <span>🚀 12 NEW JOBS SCANNED TODAY</span>
+              <span>•</span>
+              <span>✨ 85% ATS MATCH RATE ACHIEVED</span>
+              <span>•</span>
+              <span>🔥 4 INTERVIEW TEMPLATES ADDED</span>
+            </div>
           </div>
         </div>
       </div>
@@ -64,7 +66,7 @@ export default function DashboardPage() {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[280px]"
       >
         {/* Hero Bento - Job Finder */}
-        <motion.div variants={item} className="bento-card col-span-1 md:col-span-2 lg:col-span-2 row-span-2 group cursor-pointer block p-8 lg:p-10 flex flex-col justify-between bg-white">
+        <motion.div variants={item} className="bento-card col-span-1 md:col-span-2 lg:col-span-2 row-span-2 group cursor-pointer block p-5 md:p-8 lg:p-10 flex flex-col justify-between bg-white">
           <Link to="/dashboard/job-finder" className="absolute inset-0 z-10" />
           
           <div className="flex justify-between items-start z-10 relative">
@@ -88,11 +90,11 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex gap-4 pt-4">
-              <div className="bg-white text-black rounded-[32px] px-6 py-4 flex flex-col w-32 shadow-[var(--shadow-soft)]">
+              <div className="bg-white text-black rounded-[32px] px-6 py-4 flex flex-col w-28 md:w-32 shadow-[var(--shadow-soft)]">
                 <span className="font-display font-bold text-4xl leading-none">245</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest mt-2 text-black/50">Jobs Matched</span>
               </div>
-              <div className="bg-black text-white rounded-[32px] px-6 py-4 flex flex-col w-32 shadow-[var(--shadow-soft)]">
+              <div className="bg-black text-white rounded-[32px] px-6 py-4 flex flex-col w-28 md:w-32 shadow-[var(--shadow-soft)]">
                 <span className="font-display font-bold text-4xl leading-none">12</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest mt-2 text-white/50">Active Scans</span>
               </div>

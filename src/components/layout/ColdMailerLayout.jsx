@@ -29,19 +29,19 @@ function ColdMailerHeader() {
   }, [location.pathname]); // Refresh on navigation
 
   return (
-    <div className="space-y-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    <div className="space-y-6 md:space-y-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full overflow-x-hidden">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="pill-badge bg-[var(--color-accent-yellow)]/20 text-black mb-4">OUTREACH</div>
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
             Cold Mailer.
           </h1>
-          <p className="mt-4 text-black/50 font-medium max-w-lg">
+          <p className="mt-2 md:mt-4 text-sm md:text-base text-black/50 font-medium max-w-lg">
             Draft one-off emails or run personalized bulk campaigns from your CSV lists.
           </p>
         </motion.div>
 
-        <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 md:mt-0 w-full md:w-auto max-w-full">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}>
             <Link 
               to="/dashboard/job-finder/wallet"
@@ -67,9 +67,10 @@ function ColdMailerHeader() {
           )}
 
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15 } }}>
-            <button 
+            <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 rounded-full hover:bg-black/5 transition-colors"
+              aria-label="Open cart"
+              className="relative min-h-11 min-w-11 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors shrink-0"
             >
               <ShoppingCart className="w-6 h-6" />
               {cart.length > 0 && (
@@ -90,7 +91,7 @@ function ColdMailerHeader() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1 -mx-1 px-1">
         {subNav.map((item) => {
           const Icon = item.icon;
           return (
@@ -99,7 +100,7 @@ function ColdMailerHeader() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `${isActive ? 'pill-btn' : 'pill-btn-secondary'} flex items-center gap-2 !px-5 !py-2.5 text-sm`
+                `${isActive ? 'pill-btn' : 'pill-btn-secondary'} flex items-center gap-2 !px-5 !py-2.5 text-sm shrink-0`
               }
             >
               <Icon className="h-4 w-4" />

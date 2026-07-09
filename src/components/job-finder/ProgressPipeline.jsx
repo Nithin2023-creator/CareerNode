@@ -25,17 +25,25 @@ export default function ProgressPipeline({ status }) {
   }
 
   return (
-    <div className="w-full overflow-x-auto pb-2 hide-scrollbar md:overflow-visible">
-      <div className="min-w-[520px] md:min-w-0 flex items-center justify-between relative">
-      {/* Background track line */}
-      <div className="absolute left-[10%] right-[10%] top-1/2 -translate-y-1/2 h-1 bg-black/5 z-0" />
+    <div className="w-full pb-2">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-0 md:items-center justify-between relative">
+      {/* Background track line (horizontal on md) */}
+      <div className="hidden md:block absolute left-[10%] right-[10%] top-1/2 -translate-y-1/2 h-1 bg-black/5 z-0" />
+      {/* Background track line (vertical on mobile) */}
+      <div className="md:hidden absolute top-6 bottom-6 left-[22px] w-1 bg-black/5 z-0" />
       
       {/* Active track line */}
       {currentStepIndex > 0 && (
-        <div 
-          className="absolute left-[10%] top-1/2 -translate-y-1/2 h-1 bg-[var(--color-accent-blue)]/50 z-0 transition-all duration-500 ease-in-out" 
-          style={{ width: `${(currentStepIndex / (steps.length - 1)) * 80}%` }}
-        />
+        <>
+          <div 
+            className="hidden md:block absolute left-[10%] top-1/2 -translate-y-1/2 h-1 bg-[var(--color-accent-blue)]/50 z-0 transition-all duration-500 ease-in-out" 
+            style={{ width: `${(currentStepIndex / (steps.length - 1)) * 80}%` }}
+          />
+          <div 
+            className="md:hidden absolute left-[22px] top-6 w-1 bg-[var(--color-accent-blue)]/50 z-0 transition-all duration-500 ease-in-out" 
+            style={{ height: `${(currentStepIndex / (steps.length - 1)) * 100}%`, maxHeight: 'calc(100% - 48px)' }}
+          />
+        </>
       )}
 
       {steps.map((step, index) => {
@@ -64,8 +72,8 @@ export default function ProgressPipeline({ status }) {
         }
 
         return (
-          <div key={step.id} className="relative z-10 flex flex-col items-center gap-2 group">
-            <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 ${circleClass}`}>
+          <div key={step.id} className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-2 group">
+            <div className={`shrink-0 h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 ${circleClass}`}>
               <Icon className={`h-5 w-5 ${iconClass}`} />
               {isActive && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -74,7 +82,7 @@ export default function ProgressPipeline({ status }) {
                 </span>
               )}
             </div>
-            <span className={`text-xs uppercase tracking-widest text-center ${textClass}`}>
+            <span className={`text-xs uppercase tracking-widest text-left md:text-center ${textClass}`}>
               {step.label}
             </span>
           </div>

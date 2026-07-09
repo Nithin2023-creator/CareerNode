@@ -91,10 +91,60 @@ export default function LandingPage() {
           }, 0.75);
       }
 
+      // Hide scroll-reveal elements immediately before any ScrollTrigger gets created
+      if (!prefersReducedMotion) {
+        gsap.set([
+          '.toolkit-card',
+          '.how-it-works-step',
+          '.stats-item',
+          '.brand-pillar',
+          '.faq-item',
+          '.trust-badge',
+          '.grid-pixel',
+          '.automations-teaser'
+        ], { autoAlpha: 0, y: 40 });
+      }
+
       startHeroIntroRef.current = () => {
         if (intro) intro.play();
         refreshTimerRef.current = setTimeout(
-          () => refreshScrollTrigger(),
+          () => {
+            refreshScrollTrigger();
+
+            // Create scroll-reveal batches AFTER refresh
+            if (!prefersReducedMotion) {
+              revealOnScroll('.toolkit-card', 0.2);
+              revealOnScroll('.how-it-works-step', 0.12);
+              revealOnScroll('.stats-item', 0.1);
+              revealOnScroll('.brand-pillar', 0.15);
+              revealOnScroll('.faq-item', 0.08);
+              revealOnScroll('.trust-badge', 0.08);
+              revealOnScroll('.grid-pixel', 0.06);
+
+              ScrollTrigger.batch('.automations-teaser', {
+                start: 'top 90%',
+                once: true,
+                onEnter: (batch) => {
+                  gsap.fromTo(
+                    batch,
+                    { y: 40, autoAlpha: 0 },
+                    { y: 0, autoAlpha: 1, duration: 0.8, ease: 'power3.out', overwrite: true }
+                  );
+                },
+              });
+            } else {
+              gsap.set([
+                '.toolkit-card',
+                '.how-it-works-step',
+                '.stats-item',
+                '.brand-pillar',
+                '.faq-item',
+                '.trust-badge',
+                '.grid-pixel',
+                '.automations-teaser'
+              ], { autoAlpha: 1, y: 0 });
+            }
+          },
           prefersReducedMotion ? 100 : 1400
         );
       };
@@ -139,25 +189,6 @@ export default function LandingPage() {
         });
       });
 
-      revealOnScroll('.toolkit-card', 0.2);
-      revealOnScroll('.how-it-works-step', 0.12);
-      revealOnScroll('.stats-item', 0.1);
-      revealOnScroll('.brand-pillar', 0.15);
-      revealOnScroll('.faq-item', 0.08);
-      revealOnScroll('.trust-badge', 0.08);
-      revealOnScroll('.grid-pixel', 0.06);
-
-      ScrollTrigger.batch('.automations-teaser', {
-        start: 'top 90%',
-        once: true,
-        onEnter: (batch) => {
-          gsap.fromTo(
-            batch,
-            { y: 40, autoAlpha: 0 },
-            { y: 0, autoAlpha: 1, duration: 0.8, ease: 'power3.out', overwrite: true }
-          );
-        },
-      });
     }, container);
 
     return () => {

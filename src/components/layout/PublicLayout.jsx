@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { gsap } from 'gsap';
 import { initLenisScroll } from '../../lib/lenisScroll';
 import PublicFooter from './PublicFooter';
 import CustomCursor from '../interactive/CustomCursor';
@@ -13,13 +14,44 @@ export default function PublicLayout() {
   const location = useLocation();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const isAuthenticated = !!localStorage.getItem('cn_token');
+  const glowRef = useRef(null);
+  
+  const isLanding = location.pathname === '/';
 
   useEffect(() => {
     return initLenisScroll();
   }, []);
 
+  useEffect(() => {
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    if (!isLanding || isTouch || prefersReducedMotion || !glowRef.current) return;
+
+    gsap.set(glowRef.current, { x: -300, y: -300, opacity: 0 });
+    gsap.to(glowRef.current, { opacity: 1, duration: 1.2, delay: 0.5, ease: 'power2.out' });
+
+    const xTo = gsap.quickTo(glowRef.current, 'x', { duration: 0.6, ease: 'power3' });
+    const yTo = gsap.quickTo(glowRef.current, 'y', { duration: 0.6, ease: 'power3' });
+
+    const handleMouseMove = (e) => {
+      // Offset by half glow size (600/2)
+      xTo(e.clientX - 300);
+      yTo(e.clientY - 300);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [isLanding]);
+
   return (
     <div className="min-h-screen bg-[var(--color-background)] text-black relative">
+      {isLanding && (
+        <div
+          ref={glowRef}
+          className="fixed top-0 left-0 w-[600px] h-[600px] bg-[var(--color-accent-blue)]/15 rounded-full blur-[100px] pointer-events-none hidden lg:block z-40 mix-blend-multiply opacity-0"
+        />
+      )}
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
       <SplashScreen />
       <CustomCursor />

@@ -183,7 +183,7 @@
 
 .marquee-track {
   display: flex;
-  width: fit-content;
+  width: max-content;
   animation: marquee 20s linear infinite;
 }
 
@@ -206,4 +206,16 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0,0,0,0.4);
+}
+
+/* Landing page scroll-reveal: hidden until GSAP triggers */
+.toolkit-card,
+.how-it-works-step,
+.stats-item,
+.brand-pillar,
+.faq-item,
+.trust-badge,
+.grid-pixel,
+.automations-teaser {
+  visibility: hidden;
 }

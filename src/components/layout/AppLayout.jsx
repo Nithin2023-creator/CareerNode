@@ -39,8 +39,8 @@ export default function AppLayout() {
       </div>
       
       {/* Main Content Area - The Inner Frame */}
-      <main className="flex-1 bg-white rounded-[32px] lg:rounded-[48px] ml-0 lg:ml-6 relative shadow-[var(--shadow-soft)] min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4rem)] overflow-y-visible">
-        <div className="mx-auto w-full h-full">
+      <main className="flex-1 min-w-0 overflow-x-hidden bg-white rounded-[32px] lg:rounded-[48px] ml-0 lg:ml-6 relative shadow-[var(--shadow-soft)] min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4rem)] overflow-y-visible">
+        <div className="mx-auto w-full h-full min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -48,7 +48,7 @@ export default function AppLayout() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="p-6 md:p-10 lg:p-12"
+              className="p-6 md:p-10 lg:p-12 min-w-0 max-w-full"
             >
               <Outlet />
             </motion.div>

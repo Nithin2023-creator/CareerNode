@@ -6,7 +6,6 @@ import MagneticButton from '../../components/interactive/MagneticButton';
 
 export default function HeroSection() {
   const heroRef = useRef(null);
-  const glowRef = useRef(null);
   const b1Ref = useRef(null);
   const b2Ref = useRef(null);
   const b3Ref = useRef(null);
@@ -15,10 +14,7 @@ export default function HeroSection() {
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
-    if (isTouch || prefersReducedMotion || !glowRef.current || !heroRef.current) return;
-
-    const xTo = gsap.quickTo(glowRef.current, "x", { duration: 0.6, ease: "power3" });
-    const yTo = gsap.quickTo(glowRef.current, "y", { duration: 0.6, ease: "power3" });
+    if (isTouch || prefersReducedMotion || !heroRef.current) return;
 
     const b1X = gsap.quickTo(b1Ref.current, "x", { duration: 1, ease: "power3.out" });
     const b1Y = gsap.quickTo(b1Ref.current, "y", { duration: 1, ease: "power3.out" });
@@ -32,10 +28,6 @@ export default function HeroSection() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
-      // Center the glow (assuming 600x600 glow)
-      xTo(x - 300);
-      yTo(y - 300);
-
       const normX = (x / rect.width) * 2 - 1;
       const normY = (y / rect.height) * 2 - 1;
 
@@ -53,9 +45,6 @@ export default function HeroSection() {
     const section = heroRef.current;
     section.addEventListener('mousemove', handleMouseMove);
 
-    gsap.set(glowRef.current, { x: -300, y: -300, opacity: 0 });
-    gsap.to(glowRef.current, { opacity: 1, duration: 1.2, delay: 0.5, ease: 'power2.out' });
-
     return () => {
       section.removeEventListener('mousemove', handleMouseMove);
     };
@@ -63,12 +52,6 @@ export default function HeroSection() {
 
   return (
     <section id="hero" ref={heroRef} className="hero-section min-h-[100svh] relative flex flex-col justify-center items-center pt-24 pb-20 px-4 md:px-8 overflow-hidden bg-[var(--color-background)]">
-      {/* Cursor Spotlight */}
-      <div 
-        ref={glowRef}
-        className="absolute top-0 left-0 w-[600px] h-[600px] bg-[var(--color-accent-blue)]/15 rounded-full blur-[100px] pointer-events-none hidden lg:block z-0 mix-blend-multiply opacity-0"
-      />
-
       {/* Floating Badges */}
       <div className="parallax-badge-1 absolute top-[20%] left-[10%] hidden lg:block z-0">
         <div ref={b1Ref} className="bg-white/80 backdrop-blur-sm text-black shadow-[var(--shadow-soft)] text-sm px-6 py-3 rounded-full font-bold tracking-widest uppercase">LIVE SCANS</div>

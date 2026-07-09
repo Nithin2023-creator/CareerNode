@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Store, ListPlus, Wallet, Settings, ShoppingCart, Info, AlertCircle } from 'lucide-react';
@@ -7,6 +7,7 @@ import CartDrawer from '../job-finder/CartDrawer';
 import JobFinderIntroModal from '../job-finder/JobFinderIntroModal';
 import { useCart } from '../../pages/job-finder/CartContext';
 import { IntroVisibilityProvider, useIntroVisibility } from '../../pages/job-finder/IntroVisibilityContext';
+import { hasSeenJobFinderIntro } from '../../pages/job-finder/helpers';
 
 const subNav = [
   { name: 'Marketplace', to: '/dashboard/job-finder', end: true, icon: Store },
@@ -26,15 +27,26 @@ export default function JobFinderLayout() {
 function JobFinderLayoutInner() {
   const location = useLocation();
   const { cart, wallet } = useCart();
-  const { inlineIntroOpen } = useIntroVisibility();
+  const { inlineIntroOpen, dismissIntro } = useIntroVisibility();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isIntroModalOpen, setIsIntroModalOpen] = useState(false);
 
   const showIntroTrigger = !inlineIntroOpen;
   const isLowBalance = wallet.balance > 0 && wallet.balance < 20;
 
+  useEffect(() => {
+    if (!hasSeenJobFinderIntro() && window.matchMedia('(max-width: 767px)').matches) {
+      setIsIntroModalOpen(true);
+    }
+  }, []);
+
+  const handleCloseIntroModal = () => {
+    dismissIntro();
+    setIsIntroModalOpen(false);
+  };
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 md:space-y-10">
       {isLowBalance && (
         <div className="bento-card bg-[var(--color-accent-yellow)]/10 border-2 border-[var(--color-accent-yellow)]/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -49,32 +61,32 @@ function JobFinderLayoutInner() {
         </div>
       )}
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full overflow-x-hidden">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="pill-badge bg-[var(--color-accent-blue)]/10 text-[var(--color-accent-blue)] mb-4">MARKETPLACE</div>
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
             Job Finder.
           </h1>
-          <p className="mt-4 text-black/50 font-medium max-w-lg">
+          <p className="mt-2 md:mt-4 text-sm md:text-base text-black/50 font-medium max-w-lg">
             Subscribe to companies and get notified the moment a role fits you.
           </p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto max-w-full">
           {showIntroTrigger && (
             <>
               <button
                 type="button"
                 onClick={() => setIsIntroModalOpen(true)}
                 aria-label="How Job Finder works"
-                className="sm:hidden h-10 w-10 md:h-12 md:w-12 rounded-full border border-black/10 bg-white hover:bg-black/5 flex items-center justify-center transition-colors"
+                className="sm:hidden h-10 w-10 md:h-12 md:w-12 rounded-full border border-black/10 bg-white hover:bg-black/5 flex items-center justify-center transition-colors shrink-0"
               >
                 <Info className="h-5 w-5" />
               </button>
               <button
                 type="button"
                 onClick={() => setIsIntroModalOpen(true)}
-                className="hidden sm:flex pill-badge bg-black/5 text-black hover:bg-black/10 transition-colors h-10 md:h-12 items-center cursor-pointer border border-transparent"
+                className="hidden sm:flex pill-badge bg-black/5 text-black hover:bg-black/10 transition-colors h-10 md:h-12 items-center cursor-pointer border border-transparent shrink-0"
               >
                 <Info className="h-4 w-4 mr-2" />
                 <span className="font-bold text-xs uppercase tracking-widest mt-0.5">How It Works</span>
@@ -86,7 +98,7 @@ function JobFinderLayoutInner() {
             <Wallet className="h-4 w-4" />
           </NavLink>
 
-          <NavLink to="/dashboard/job-finder/wallet" className="hidden sm:flex pill-badge bg-[var(--color-accent-yellow)]/20 text-black hover:bg-[var(--color-accent-yellow)]/40 transition-colors h-10 md:h-12 items-center">
+          <NavLink to="/dashboard/job-finder/wallet" className="hidden sm:flex pill-badge bg-[var(--color-accent-yellow)]/20 text-black hover:bg-[var(--color-accent-yellow)]/40 transition-colors h-10 md:h-12 items-center shrink-0">
             <Wallet className="h-4 w-4 mr-2" />
             <span className="font-display font-bold text-lg leading-none">{wallet.balance}</span>
             <span className="ml-1 text-[10px] font-bold uppercase tracking-widest opacity-50 mt-1">Credits</span>
@@ -94,22 +106,24 @@ function JobFinderLayoutInner() {
           
           <NotificationsBell />
           
-          <button 
-            onClick={() => setIsCartOpen(true)}
-            className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-black text-white hover:bg-[var(--color-accent-blue)] flex items-center justify-center transition-colors relative"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {cart.length > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 md:h-5 md:w-5 bg-red-500 text-white text-[10px] md:text-xs font-bold rounded-full flex items-center justify-center border-2 border-[var(--color-background)]">
-                {cart.length}
-              </span>
-            )}
-          </button>
+          <div className="relative overflow-visible shrink-0">
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-black text-white hover:bg-[var(--color-accent-blue)] flex items-center justify-center transition-colors relative"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 md:h-5 md:w-5 bg-red-500 text-white text-[10px] md:text-xs font-bold rounded-full flex items-center justify-center border-2 border-[var(--color-background)]">
+                  {cart.length}
+                </span>
+              )}
+            </button>
+          </div>
         </motion.div>
       </div>
 
       {/* Sub navigation */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1 -mx-1 px-1">
         {subNav.map((item) => {
           const Icon = item.icon;
           return (
@@ -118,7 +132,7 @@ function JobFinderLayoutInner() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `${isActive ? 'pill-btn bg-black text-white' : 'pill-btn-secondary bg-white text-black'} flex items-center gap-2 !px-5 !py-2.5 text-sm`
+                `${isActive ? 'pill-btn bg-black text-white' : 'pill-btn-secondary bg-white text-black'} flex items-center gap-2 !px-5 !py-2.5 text-sm shrink-0`
               }
             >
               <Icon className="h-4 w-4" />
@@ -139,7 +153,7 @@ function JobFinderLayoutInner() {
       </motion.div>
       
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      <JobFinderIntroModal isOpen={isIntroModalOpen} onClose={() => setIsIntroModalOpen(false)} />
+      <JobFinderIntroModal isOpen={isIntroModalOpen} onClose={handleCloseIntroModal} />
     </div>
   );
 }
