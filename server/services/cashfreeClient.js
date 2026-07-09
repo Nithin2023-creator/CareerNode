@@ -6,9 +6,11 @@ Cashfree.XEnvironment = process.env.CASHFREE_ENV === 'PRODUCTION'
   ? CFEnvironment.PRODUCTION
   : CFEnvironment.SANDBOX;
 
+const cashfreeInstance = new Cashfree();
+
 const verifyWebhookSignature = (signature, rawBody, timestamp) => {
   try {
-    Cashfree.PGVerifyWebhookSignature(signature, rawBody, timestamp);
+    cashfreeInstance.PGVerifyWebhookSignature(signature, rawBody, timestamp);
     return true;
   } catch (error) {
     console.error('Error verifying webhook signature:', error.message);
@@ -17,6 +19,6 @@ const verifyWebhookSignature = (signature, rawBody, timestamp) => {
 };
 
 module.exports = {
-  Cashfree,
+  Cashfree: cashfreeInstance,
   verifyWebhookSignature,
 };
