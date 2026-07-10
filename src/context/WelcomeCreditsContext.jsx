@@ -10,14 +10,19 @@ export const WelcomeCreditsProvider = ({ children }) => {
   const { wallet, loading } = useWallet();
 
   useEffect(() => {
-    // Only proceed if wallet is loaded and user hasn't seen the modal yet
-    if (loading || hasSeenWelcomeCredits()) return;
+    const isNewUserSession = sessionStorage.getItem('cn_is_new_user') === '1';
+
+    // Only proceed if wallet is loaded
+    if (loading) return;
+
+    // Skip if they've seen it, UNLESS they just signed up in this very session
+    if (hasSeenWelcomeCredits() && !isNewUserSession) return;
 
     let shouldShow = false;
     let amount = 50;
 
     // 1. Primary Check: Did auth store a flag indicating this is a new signup?
-    if (sessionStorage.getItem('cn_is_new_user') === '1') {
+    if (isNewUserSession) {
       shouldShow = true;
       const storedAmount = sessionStorage.getItem('cn_welcome_credits');
       if (storedAmount) amount = parseInt(storedAmount, 10);

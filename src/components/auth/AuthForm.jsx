@@ -3,6 +3,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../../lib/api';
+import { useWallet } from '../../context/WalletContext';
 
 export default function AuthForm({ onSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
@@ -20,6 +21,7 @@ export default function AuthForm({ onSuccess }) {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { refreshWallet } = useWallet();
 
   const navigateAfterAuth = (user) => {
     onSuccess?.();
@@ -53,6 +55,7 @@ export default function AuthForm({ onSuccess }) {
         }
       }
       
+      await refreshWallet();
       navigateAfterAuth(data.user);
     } catch (err) {
       setError(err.message || 'Google login was unsuccessful.');
@@ -110,6 +113,7 @@ export default function AuthForm({ onSuccess }) {
         }
       }
       
+      await refreshWallet();
       navigateAfterAuth(data.user);
     } catch (err) {
       setError(err.message || 'Authentication failed');
