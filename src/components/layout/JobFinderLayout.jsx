@@ -46,7 +46,7 @@ function JobFinderLayoutInner() {
   };
 
   return (
-    <div className="space-y-6 md:space-y-10">
+    <div className="space-y-4 md:space-y-10">
       {isLowBalance && (
         <div className="bento-card bg-[var(--color-accent-yellow)]/10 border-2 border-[var(--color-accent-yellow)]/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -61,10 +61,10 @@ function JobFinderLayoutInner() {
         </div>
       )}
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full overflow-x-hidden">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-6 w-full overflow-x-hidden">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="pill-badge bg-[var(--color-accent-blue)]/10 text-[var(--color-accent-blue)] mb-4">MARKETPLACE</div>
-          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
+          <h1 className="font-display text-2xl sm:text-3xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
             Job Finder.
           </h1>
           <p className="mt-2 md:mt-4 text-sm md:text-base text-black/50 font-medium max-w-lg">

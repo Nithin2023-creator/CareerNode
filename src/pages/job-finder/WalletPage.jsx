@@ -18,14 +18,14 @@ export default function WalletPage() {
     <div className="space-y-8 max-w-6xl mx-auto">
       
       {/* Hero / Balance */}
-      <div className="bento-card bg-black text-white p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 border border-black/10 shadow-[var(--shadow-lift)]">
+      <div className="bento-card bg-black text-white p-6 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 border border-black/10 shadow-[var(--shadow-lift)]">
         <div className="absolute -top-24 -right-24 h-64 w-64 bg-[var(--color-accent-yellow)] opacity-20 rounded-full blur-3xl mix-blend-screen pointer-events-none" />
         
         <div className="relative z-10 text-center md:text-left">
           <p className="text-sm font-bold uppercase tracking-widest text-white/50 mb-2 flex items-center justify-center md:justify-start gap-2">
             <Wallet className="h-4 w-4" /> Current Balance
           </p>
-          <div className="font-display text-7xl md:text-8xl font-bold text-[var(--color-accent-yellow)] leading-none tracking-tight">
+          <div className="font-display text-5xl md:text-8xl font-bold text-[var(--color-accent-yellow)] leading-none tracking-tight">
             {wallet.balance}
           </div>
           <p className="mt-2 text-white/80 font-bold uppercase tracking-widest">Credits Available</p>

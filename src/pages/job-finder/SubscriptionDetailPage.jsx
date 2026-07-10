@@ -112,7 +112,7 @@ export default function SubscriptionDetailPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
       
       {/* Header Back Link */}
       <Link to="/dashboard/job-finder/subscriptions" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-black/40 hover:text-black transition-colors">
@@ -122,19 +122,19 @@ export default function SubscriptionDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
         {/* Left Col: Header & Pipeline & Jobs */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-8 order-last lg:order-first">
           
           {/* Main Card */}
-          <div className="bento-card bg-white p-6 md:p-8 border border-black/5">
+          <div className="bento-card bg-white p-4 md:p-8 border border-black/5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
               <div className="flex items-center gap-6">
                 {company.logoUrl ? (
-                  <img src={company.logoUrl} alt={company.name} className="h-16 w-16 md:h-20 md:w-20 rounded-full border border-black/10 shadow-sm" />
+                  <img src={company.logoUrl} alt={company.name} className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 rounded-full border border-black/10 shadow-sm" />
                 ) : (
-                  <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-black/5 flex-shrink-0" />
+                  <div className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 rounded-full bg-black/5 flex-shrink-0" />
                 )}
                 <div>
-                  <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-2">{company.name}</h1>
+                  <h1 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-2">{company.name}</h1>
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-sm text-xs font-bold uppercase tracking-widest ${getSubscriptionStatusColor(subscription.status)}`}>
                       {subscription.status}
@@ -259,7 +259,7 @@ export default function SubscriptionDetailPage() {
         </div>
 
         {/* Right Col: Metadata Panel */}
-        <div className="space-y-6">
+        <div className="space-y-6 order-first lg:order-last">
           <div className="bento-card bg-white p-6 md:p-8 border border-black/5">
             <h3 className="font-display text-2xl font-bold uppercase mb-6 border-b border-black/10 pb-4">Details</h3>
             

@@ -42,22 +42,22 @@ export default function SubscriptionsPage() {
     <div className="space-y-8">
       
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bento-card bg-[var(--color-accent-blue)]/5 border border-[var(--color-accent-blue)]/20 p-6 md:p-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bento-card bg-[var(--color-accent-blue)]/5 border border-[var(--color-accent-blue)]/20 p-4 md:p-8">
           <p className="text-sm font-bold uppercase tracking-widest text-[var(--color-accent-blue)]/60 mb-2">Active</p>
-          <p className="font-display text-3xl md:text-5xl font-bold text-[var(--color-accent-blue)]">{stats.activeCount}</p>
+          <p className="font-display text-2xl md:text-5xl font-bold text-[var(--color-accent-blue)]">{stats.activeCount}</p>
         </div>
-        <div className="bento-card bg-white p-6 md:p-8 border border-black/5 shadow-[var(--shadow-soft)]">
+        <div className="bento-card bg-white p-4 md:p-8 border border-black/5 shadow-[var(--shadow-soft)]">
           <p className="text-sm font-bold uppercase tracking-widest text-black/40 mb-2">New Matches</p>
-          <p className="font-display text-3xl md:text-5xl font-bold text-black">{stats.newMatches}</p>
+          <p className="font-display text-2xl md:text-5xl font-bold text-black">{stats.newMatches}</p>
         </div>
-        <div className="bento-card bg-[var(--color-accent-yellow)]/10 border border-[var(--color-accent-yellow)]/30 p-6 md:p-8">
+        <div className="bento-card bg-[var(--color-accent-yellow)]/10 border border-[var(--color-accent-yellow)]/30 p-4 md:p-8">
           <p className="text-sm font-bold uppercase tracking-widest text-[var(--color-accent-yellow)] mb-2">Expiring Soon</p>
-          <p className="font-display text-3xl md:text-5xl font-bold text-black">{stats.expiringCount}</p>
+          <p className="font-display text-2xl md:text-5xl font-bold text-black">{stats.expiringCount}</p>
         </div>
-        <div className="bento-card bg-white p-6 md:p-8 border border-black/5 shadow-[var(--shadow-soft)]">
+        <div className="bento-card bg-white p-4 md:p-8 border border-black/5 shadow-[var(--shadow-soft)]">
           <p className="text-sm font-bold uppercase tracking-widest text-black/40 mb-2">Companies Watched</p>
-          <p className="font-display text-3xl md:text-5xl font-bold text-black">{stats.companiesWatched}</p>
+          <p className="font-display text-2xl md:text-5xl font-bold text-black">{stats.companiesWatched}</p>
         </div>
       </div>
 

@@ -42,7 +42,7 @@ export default function ResumeMakerHomePage() {
     <div className="space-y-10">
       <div className="flex flex-col gap-2">
         <div className="pill-badge bg-black/5 text-black w-fit mb-2">RESUME MAKER</div>
-        <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
+        <h1 className="font-display text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
           Get Past<br />The ATS.
         </h1>
         <p className="text-lg font-medium text-black/60 max-w-xl mt-4">
@@ -57,12 +57,12 @@ export default function ResumeMakerHomePage() {
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
         {/* Build from Scratch Card */}
-        <motion.div variants={item} className="bento-card p-8 group cursor-pointer flex flex-col justify-between min-h-[300px]" onClick={() => navigate('/dashboard/resume-maker/build')}>
+        <motion.div variants={item} className="bento-card p-5 sm:p-8 group cursor-pointer flex flex-col justify-between min-h-[200px] sm:min-h-[280px] md:min-h-[300px]" onClick={() => navigate('/dashboard/resume-maker/build')}>
           <div>
-            <div className="h-16 w-16 rounded-[24px] bg-black flex items-center justify-center shadow-[var(--shadow-soft)] mb-6 transition-transform group-hover:scale-110">
-              <FileText className="h-8 w-8 text-white" />
+            <div className="h-10 w-10 sm:h-16 sm:w-16 rounded-[24px] bg-black flex items-center justify-center shadow-[var(--shadow-soft)] mb-6 transition-transform group-hover:scale-110">
+              <FileText className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
             </div>
-            <h2 className="font-display text-4xl font-bold uppercase mb-4 text-black">Build From<br/>Scratch</h2>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold uppercase mb-4 text-black">Build From<br/>Scratch</h2>
             <p className="text-black/60 font-medium">Manually fill in your details to generate a clean, ATS-optimized PDF resume. Costs 2 credits per export.</p>
           </div>
           <div className="mt-8 flex items-center text-sm font-bold uppercase tracking-widest text-black group-hover:text-[var(--color-accent-blue)] transition-colors">
@@ -71,12 +71,12 @@ export default function ResumeMakerHomePage() {
         </motion.div>
 
         {/* Tailor to Job Card */}
-        <motion.div variants={item} className="bento-card p-8 group cursor-pointer flex flex-col justify-between min-h-[300px]" onClick={() => navigate('/dashboard/resume-maker/tailor')}>
+        <motion.div variants={item} className="bento-card p-5 sm:p-8 group cursor-pointer flex flex-col justify-between min-h-[200px] sm:min-h-[280px] md:min-h-[300px]" onClick={() => navigate('/dashboard/resume-maker/tailor')}>
           <div>
-            <div className="h-16 w-16 rounded-[24px] bg-[var(--color-accent-blue)] flex items-center justify-center shadow-[var(--shadow-soft)] mb-6 transition-transform group-hover:scale-110">
-              <Sparkles className="h-8 w-8 text-white" />
+            <div className="h-10 w-10 sm:h-16 sm:w-16 rounded-[24px] bg-[var(--color-accent-blue)] flex items-center justify-center shadow-[var(--shadow-soft)] mb-6 transition-transform group-hover:scale-110">
+              <Sparkles className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
             </div>
-            <h2 className="font-display text-4xl font-bold uppercase mb-4 text-black">Tailor To<br/>A Job</h2>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold uppercase mb-4 text-black">Tailor To<br/>A Job</h2>
             <p className="text-black/60 font-medium">Upload your resume and paste a JD. Our AI will align your keywords and optimize your content. Costs 4 credits.</p>
           </div>
           <div className="mt-8 flex items-center text-sm font-bold uppercase tracking-widest text-[var(--color-accent-blue)] group-hover:text-black transition-colors">

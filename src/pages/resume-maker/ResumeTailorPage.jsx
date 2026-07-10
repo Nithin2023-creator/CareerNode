@@ -176,10 +176,10 @@ export default function ResumeTailorPage() {
 
       {step === 1 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6">
-          <h1 className="font-display text-4xl font-bold uppercase mb-2">Tailor your resume</h1>
-          <p className="text-black/60 font-medium mb-8">Upload your existing resume and paste a job description. We'll align your experience with the employer's keywords.</p>
+          <h1 className="font-display text-2xl sm:text-4xl font-bold uppercase mb-2">Tailor your resume</h1>
+          <p className="text-black/60 font-medium mb-4 md:mb-8">Upload your existing resume and paste a job description. We'll align your experience with the employer's keywords.</p>
 
-          <div className="bento-card p-6 md:p-8 bg-white border border-black/5 shadow-[var(--shadow-soft)]">
+          <div className="bento-card p-4 md:p-8 bg-white border border-black/5 shadow-[var(--shadow-soft)]">
             <h2 className="font-display text-2xl font-bold uppercase mb-6">1. Your Resume</h2>
             
             <div className="flex gap-4 mb-6">
@@ -200,7 +200,7 @@ export default function ResumeTailorPage() {
             {inputMode === 'upload' ? (
               <div>
                 {!resumeFile ? (
-                  <label className="border-2 border-dashed border-black/20 rounded-[32px] p-10 flex flex-col items-center justify-center text-center transition-colors cursor-pointer hover:bg-[var(--color-accent-blue)]/5 hover:border-[var(--color-accent-blue)] group">
+                  <label className="border-2 border-dashed border-black/20 rounded-[32px] p-6 sm:p-10 flex flex-col items-center justify-center text-center transition-colors cursor-pointer hover:bg-[var(--color-accent-blue)]/5 hover:border-[var(--color-accent-blue)] group">
                     <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleFileChange} />
                     <Upload className="h-10 w-10 text-black/50 mb-4 group-hover:text-[var(--color-accent-blue)]" />
                     <p className="text-xl font-display font-bold mb-2 group-hover:text-[var(--color-accent-blue)] uppercase">Upload or Drop</p>
@@ -232,7 +232,7 @@ export default function ResumeTailorPage() {
             )}
           </div>
 
-          <div className="bento-card p-6 md:p-8 bg-white border border-black/5 shadow-[var(--shadow-soft)]">
+          <div className="bento-card p-4 md:p-8 bg-white border border-black/5 shadow-[var(--shadow-soft)]">
             <h2 className="font-display text-2xl font-bold uppercase mb-6">2. Job Description</h2>
             <textarea 
               className="w-full h-48 bg-white/80 border border-black/10 shadow-inner rounded-[32px] p-6 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-black/5 transition-shadow resize-none"

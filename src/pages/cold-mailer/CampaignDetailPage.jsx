@@ -374,8 +374,8 @@ export default function CampaignDetailPage() {
 
         {/* Preview panel */}
         <div className="lg:col-span-1" ref={previewRef}>
-          <div className="bento-card p-6 md:p-8 bg-white lg:sticky lg:top-6">
-            <h3 className="font-display text-2xl font-bold uppercase mb-5">Preview</h3>
+          <div className="bento-card p-4 md:p-8 bg-white lg:sticky lg:top-6">
+            <h3 className="font-display text-xl font-bold uppercase mb-5">Preview</h3>
             {selected ? (
               <div className="space-y-4">
                 <div>

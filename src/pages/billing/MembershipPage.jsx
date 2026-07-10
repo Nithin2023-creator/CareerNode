@@ -87,7 +87,7 @@ export default function MembershipPage() {
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header>
-        <h1 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-tight text-black">
+        <h1 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold uppercase tracking-tight text-black">
           Your Membership
         </h1>
         <p className="text-black/50 font-medium mt-2">Manage your plan, perks, and monthly credits.</p>
@@ -121,7 +121,7 @@ export default function MembershipPage() {
           return (
             <div
               key={plan._id}
-              className={`relative bento-card !overflow-visible bg-white border-2 rounded-3xl p-6 mt-4 flex flex-col shadow-[var(--shadow-soft)] hover:-translate-y-1 transition-all ${
+              className={`relative bento-card !overflow-visible bg-white border-2 rounded-3xl p-4 sm:p-6 mt-4 flex flex-col shadow-[var(--shadow-soft)] hover:-translate-y-1 transition-all ${
                 isCurrent ? 'border-black shadow-[var(--shadow-lift)]' : 'border-black/10'
               }`}
             >
@@ -144,7 +144,7 @@ export default function MembershipPage() {
               <div className="mb-6 mt-2">
                 <h3 className="font-display text-2xl font-bold uppercase tracking-tight text-black">{plan.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
-                  <span className="font-display text-4xl font-bold text-black">₹{plan.monthlyPrice}</span>
+                  <span className="font-display text-3xl sm:text-4xl font-bold text-black">₹{plan.monthlyPrice}</span>
                   <span className="text-black/50 font-medium">/mo</span>
                 </div>
               </div>

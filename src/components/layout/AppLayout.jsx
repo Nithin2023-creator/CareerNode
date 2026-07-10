@@ -15,9 +15,9 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-black p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[var(--color-background)] text-black p-2 sm:p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row">
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex justify-between items-center mb-4 pt-[env(safe-area-inset-top)]">
+      <div className="lg:hidden flex justify-between items-center mb-4 pt-[env(safe-area-inset-top)] px-2">
         <div className="flex flex-col items-start gap-1">
           <span className="font-display font-bold text-2xl tracking-tight text-black leading-none uppercase">Career</span>
           <span className="font-display font-bold text-2xl tracking-tight text-white bg-black px-1.5 rounded-xl leading-none uppercase mt-1">Node.</span>
@@ -48,7 +48,7 @@ export default function AppLayout() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="p-6 md:p-10 lg:p-12 min-w-0 max-w-full"
+              className="p-4 sm:p-6 md:p-10 lg:p-12 min-w-0 max-w-full"
             >
               <Outlet />
             </motion.div>

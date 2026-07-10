@@ -86,7 +86,7 @@ export default function MarketplacePage() {
       )}
       
       {/* Search and Filter */}
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md py-3 -mx-4 px-4 md:mx-0 md:px-0 border-b md:border border-black/5 md:rounded-[32px]">
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md py-2 md:py-3 -mx-4 px-4 md:mx-0 md:px-0 border-b md:border border-black/5 md:rounded-[32px]">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-black/40" />
@@ -127,7 +127,7 @@ export default function MarketplacePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
             {visibleCompanies.map(company => (
               <CompanyProductCard 
                 key={company.id} 

@@ -340,12 +340,12 @@ export default function NewCampaignPage() {
             <UploadStep uploading={uploading} onFile={handleFileSelect} />
 
             {/* Bundle Selection */}
-            <div className="bento-card p-8 md:p-12 bg-white border border-black/10 flex flex-col h-full">
-              <div className="flex flex-col items-center mb-8">
-                <div className="p-5 bg-[var(--color-accent-blue)]/20 rounded-[28px] mb-6">
-                  <Package className="h-12 w-12 text-[var(--color-accent-blue)]" />
+            <div className="bento-card p-6 bg-white border border-black/10 flex flex-col h-full">
+              <div className="flex flex-col items-center mb-6">
+                <div className="p-4 bg-[var(--color-accent-blue)]/20 rounded-2xl mb-4">
+                  <Package className="h-8 w-8 text-[var(--color-accent-blue)]" />
                 </div>
-                <h3 className="font-display text-3xl font-bold uppercase mb-3 text-center">Use Purchased Bundles</h3>
+                <h3 className="font-display text-2xl font-bold uppercase mb-2 text-center">Use Purchased Bundles</h3>
                 <p className="text-black/50 max-w-sm text-center">
                   Select from your HR contact bundles to instantly populate your campaign recipients.
                 </p>
@@ -554,9 +554,26 @@ export default function NewCampaignPage() {
       {/* Step 2: Template & Launch */}
       {step === 'template' && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          
+          {/* Mobile Tab Toggle */}
+          <div className="flex lg:hidden gap-3">
+            <button
+              onClick={() => setTemplateMobileTab('form')}
+              className={`${templateMobileTab === 'form' ? 'pill-btn bg-black text-white' : 'pill-btn-secondary bg-white text-black'} flex-1 justify-center px-5 py-2.5 text-sm`}
+            >
+              EDIT
+            </button>
+            <button
+              onClick={() => setTemplateMobileTab('preview')}
+              className={`${templateMobileTab === 'preview' ? 'pill-btn bg-black text-white' : 'pill-btn-secondary bg-white text-black'} flex-1 justify-center px-5 py-2.5 text-sm`}
+            >
+              PREVIEW
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Form */}
-            <div className="lg:col-span-1 space-y-4">
+            <div className={`lg:col-span-1 space-y-4 ${templateMobileTab === 'form' ? 'block' : 'hidden'} lg:block`}>
               <div className="bento-card p-6 md:p-8 bg-white/60 backdrop-blur-sm space-y-6">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-widest text-black/60 mb-2 block">
@@ -631,7 +648,7 @@ export default function NewCampaignPage() {
             </div>
 
             {/* Preview */}
-            <div className="lg:col-span-2">
+            <div className={`lg:col-span-2 ${templateMobileTab === 'preview' ? 'block' : 'hidden'} lg:block`}>
               <div className="bento-card p-6 md:p-8 bg-white h-full flex flex-col">
                 <div className="flex items-center justify-between mb-6 border-b border-black/10 pb-5">
                   <h3 className="font-display text-3xl font-bold uppercase">Live Preview</h3>

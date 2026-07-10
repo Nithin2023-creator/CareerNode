@@ -31,7 +31,7 @@ export default function DashboardPage() {
       {/* Header with Marquee */}
       <div className="flex flex-col gap-6">
         <div className="flex flex-col lg:flex-row justify-between lg:items-end gap-4 lg:gap-0">
-          <h1 className="min-w-0 font-display text-4xl xs:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight uppercase leading-[0.85]">
+          <h1 className="min-w-0 font-display text-3xl xs:text-4xl md:text-7xl lg:text-8xl font-bold tracking-tight uppercase leading-[0.85]">
             Welcome Back,<br/>Fresher.
           </h1>
           <div className="hidden md:block w-64 text-sm font-medium border-l border-black/10 pl-4 shrink-0">
@@ -63,10 +63,10 @@ export default function DashboardPage() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[280px]"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[220px] sm:auto-rows-[260px] md:auto-rows-[280px]"
       >
         {/* Hero Bento - Job Finder */}
-        <motion.div variants={item} className="bento-card col-span-1 md:col-span-2 lg:col-span-2 row-span-2 group cursor-pointer block p-5 md:p-8 lg:p-10 flex flex-col justify-between bg-white">
+        <motion.div variants={item} className="bento-card col-span-1 md:col-span-2 lg:col-span-2 row-span-1 md:row-span-2 group cursor-pointer block p-5 sm:p-8 lg:p-10 flex flex-col justify-between bg-white">
           <Link to="/dashboard/job-finder" className="absolute inset-0 z-10" />
           
           <div className="flex justify-between items-start z-10 relative">
@@ -85,17 +85,17 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <h2 className="font-display text-5xl md:text-7xl font-bold uppercase leading-[0.9] mb-4 text-black">Job<br/>Finder.</h2>
+              <h2 className="font-display text-4xl md:text-7xl font-bold uppercase leading-[0.9] mb-4 text-black">Job<br/>Finder.</h2>
               <p className="text-lg md:text-xl font-medium max-w-sm text-black/70">Auto-scan career pages and extract best-fit roles using AI.</p>
             </div>
             
             <div className="flex gap-4 pt-4">
-              <div className="bg-white text-black rounded-[32px] px-6 py-4 flex flex-col w-28 md:w-32 shadow-[var(--shadow-soft)]">
-                <span className="font-display font-bold text-4xl leading-none">245</span>
+              <div className="bg-white text-black rounded-[32px] px-6 py-4 flex flex-col w-20 sm:w-24 md:w-32 shadow-[var(--shadow-soft)]">
+                <span className="font-display font-bold text-3xl md:text-4xl leading-none">245</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest mt-2 text-black/50">Jobs Matched</span>
               </div>
-              <div className="bg-black text-white rounded-[32px] px-6 py-4 flex flex-col w-28 md:w-32 shadow-[var(--shadow-soft)]">
-                <span className="font-display font-bold text-4xl leading-none">12</span>
+              <div className="bg-black text-white rounded-[32px] px-6 py-4 flex flex-col w-20 sm:w-24 md:w-32 shadow-[var(--shadow-soft)]">
+                <span className="font-display font-bold text-3xl md:text-4xl leading-none">12</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest mt-2 text-white/50">Active Scans</span>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Cold Emailer */}
-        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-8 flex flex-col justify-between">
+        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-5 sm:p-8 flex flex-col justify-between">
           <Link to="/dashboard/emailer" className="absolute inset-0 z-10" />
           <div className="flex justify-between items-start z-10 relative">
             <div className="pill-badge bg-[var(--color-accent-yellow)]/20 text-black">
@@ -123,7 +123,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Resume Maker */}
-        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-8 flex flex-col justify-between">
+        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-5 sm:p-8 flex flex-col justify-between">
           <Link to="/dashboard/resume-maker" className="absolute inset-0 z-10" />
           <div className="flex justify-between items-start z-10 relative">
             <div className="pill-badge bg-black/5 text-black">
@@ -143,7 +143,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Automations */}
-        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-8 flex flex-col justify-between">
+        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-5 sm:p-8 flex flex-col justify-between">
           <Link to="/dashboard/automations" className="absolute inset-0 z-10" />
           <div className="flex justify-between items-start z-10 relative">
             <div className={`pill-badge ${features.automationsReleased ? 'bg-black/5 text-black' : 'bg-[var(--color-accent-yellow)]/20 text-black'}`}>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Membership Status */}
-        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-8 flex flex-col justify-between">
+        <motion.div variants={item} className="bento-card bg-white group cursor-pointer p-5 sm:p-8 flex flex-col justify-between">
           <Link to="/dashboard/billing" className="absolute inset-0 z-10" />
           <div className="flex justify-between items-start z-10 relative">
             <div className="pill-badge bg-brand-primary/10 text-brand-primary">

@@ -169,7 +169,7 @@ export default function ResumeEditor({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Resume Title"
-          className="font-display text-4xl md:text-5xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-black/20 w-full md:w-auto"
+          className="font-display text-2xl sm:text-4xl md:text-5xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-black/20 w-full md:w-auto"
         />
         
         <div className="flex items-center gap-3">

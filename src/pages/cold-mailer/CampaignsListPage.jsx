@@ -122,7 +122,7 @@ export default function CampaignsListPage() {
 
   if (campaigns.length === 0) {
     return (
-      <div className="bento-card p-12 md:p-16 text-center bg-white flex flex-col items-center">
+      <div className="bento-card p-8 md:p-16 text-center bg-white flex flex-col items-center">
         <div className="p-4 bg-[var(--color-accent-yellow)]/20 rounded-[24px] mb-6">
           <Inbox className="h-10 w-10 text-black" />
         </div>
@@ -166,12 +166,12 @@ export default function CampaignsListPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="bento-card p-6 md:p-8 bg-white flex flex-col"
+            className="bento-card p-4 sm:p-6 md:p-8 bg-white flex flex-col"
           >
             <div className="flex items-start justify-between gap-4 mb-6">
               <div className="min-w-0">
                 <span className={`pill-badge ${badgeClass} mb-3`}>{campaign.status}</span>
-                <h3 className="font-display text-2xl md:text-3xl font-bold uppercase leading-tight truncate">
+                <h3 className="font-display text-xl md:text-3xl font-bold uppercase leading-tight truncate">
                   {campaign.title}
                 </h3>
                 <p className="text-xs text-black/40 font-bold uppercase tracking-widest mt-2">

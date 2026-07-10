@@ -29,11 +29,11 @@ function ColdMailerHeader() {
   }, [location.pathname]); // Refresh on navigation
 
   return (
-    <div className="space-y-6 md:space-y-10">
+    <div className="space-y-4 md:space-y-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 w-full overflow-x-hidden">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="pill-badge bg-[var(--color-accent-yellow)]/20 text-black mb-4">OUTREACH</div>
-          <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
+          <h1 className="font-display text-2xl sm:text-3xl md:text-6xl lg:text-7xl font-bold tracking-tight uppercase leading-[0.9]">
             Cold Mailer.
           </h1>
           <p className="mt-2 md:mt-4 text-sm md:text-base text-black/50 font-medium max-w-lg">
