@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Subscription = require('../models/Subscription');
 const Company = require('../models/Company');
 const JobListing = require('../models/JobListing');
@@ -56,6 +57,9 @@ exports.listSubscriptions = async (userId) => {
 };
 
 exports.getSubscription = async (userId, subscriptionId) => {
+  if (!mongoose.isValidObjectId(subscriptionId)) {
+    throw httpError(400, 'Invalid subscription ID');
+  }
   const sub = await Subscription.findOne({ _id: subscriptionId, userId }).lean();
   if (!sub) throw httpError(404, 'Subscription not found');
 
@@ -170,6 +174,9 @@ exports.checkout = async (user, cartItems, paymentMethod) => {
 };
 
 async function loadOwnedSubscription(userId, subscriptionId) {
+  if (!mongoose.isValidObjectId(subscriptionId)) {
+    throw httpError(400, 'Invalid subscription ID');
+  }
   const sub = await Subscription.findOne({ _id: subscriptionId, userId });
   if (!sub) throw httpError(404, 'Subscription not found');
   return sub;

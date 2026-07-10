@@ -27,7 +27,7 @@ export default function SubscriptionDetailPage() {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const sub = await withMockFallback(jobFinderApi.getSubscription(id), mockSubscriptions.find(s => s.id === id) || mockSubscriptions[0]);
+        const sub = await jobFinderApi.getSubscription(id);
         const comp = await withMockFallback(jobFinderApi.listMarketplaceCompanies(), mockCompanies).then(comps => comps.find(c => c.id === sub.companyId));
         const options = await withMockFallback(jobFinderApi.getJobFilterOptions(id), { locations: [], experienceLevels: [] });
 
