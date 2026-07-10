@@ -11,7 +11,7 @@ export default function FaqSection() {
     },
     {
       q: "Is it free to start?",
-      a: "Yes! You can sign up, build your profile, and use the base features completely free. Advanced features like verified HR contact bundles operate on a transparent credit system."
+      a: "Yes! You can sign up, build your profile, and use the base features completely free. You also get 50 free credits just for signing up to explore our premium tools. Advanced features operate on a transparent credit system."
     },
     {
       q: "What are credits?",

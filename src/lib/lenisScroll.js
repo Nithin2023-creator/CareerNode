@@ -9,6 +9,14 @@ export function getLenis() {
   return lenisInstance;
 }
 
+export function scrollToTop() {
+  if (lenisInstance) {
+    lenisInstance.scrollTo(0, { immediate: true });
+  } else {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }
+}
+
 export function initLenisScroll() {
   if (isCoarsePointer()) {
     return () => {};

@@ -46,6 +46,13 @@ export default function AuthForm({ onSuccess }) {
       localStorage.setItem('cn_token', data.token);
       localStorage.setItem('cn_user', JSON.stringify(data.user));
       
+      if (data.isNewUser) {
+        sessionStorage.setItem('cn_is_new_user', '1');
+        if (data.welcomeCredits) {
+          sessionStorage.setItem('cn_welcome_credits', data.welcomeCredits.toString());
+        }
+      }
+      
       navigateAfterAuth(data.user);
     } catch (err) {
       setError(err.message || 'Google login was unsuccessful.');
@@ -96,6 +103,13 @@ export default function AuthForm({ onSuccess }) {
       localStorage.setItem('cn_token', data.token);
       localStorage.setItem('cn_user', JSON.stringify(data.user));
       
+      if (data.isNewUser) {
+        sessionStorage.setItem('cn_is_new_user', '1');
+        if (data.welcomeCredits) {
+          sessionStorage.setItem('cn_welcome_credits', data.welcomeCredits.toString());
+        }
+      }
+      
       navigateAfterAuth(data.user);
     } catch (err) {
       setError(err.message || 'Authentication failed');
@@ -131,6 +145,14 @@ export default function AuthForm({ onSuccess }) {
       {error && (
         <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100">
           {error}
+        </div>
+      )}
+
+      {mode === 'signup' && (
+        <div className="mb-6 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-black bg-[var(--color-accent-yellow)] px-4 py-2 rounded-full inline-block shadow-[var(--shadow-soft)]">
+            Get 50 free credits — no card needed
+          </p>
         </div>
       )}
 

@@ -41,6 +41,30 @@ exports.addCredits = async (userId, amount, description, source) => {
   return updated;
 };
 
+exports.grantCredits = async (userId, amount, description, source = 'signup') => {
+  const wallet = await getWalletDocument(userId);
+  
+  const updated = await Wallet.findOneAndUpdate(
+    { userId },
+    {
+      $inc: { balance: amount },
+      $push: {
+        transactions: {
+          type: 'grant',
+          description,
+          credits: amount,
+          balanceAfter: wallet.balance + amount,
+          source,
+          date: new Date()
+        }
+      }
+    },
+    { new: true, upsert: true }
+  );
+  
+  return updated;
+};
+
 exports.spendCredits = async (userId, amount, description, source) => {
   const wallet = await getWalletDocument(userId);
   

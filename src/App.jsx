@@ -46,6 +46,7 @@ import BundleCheckoutPage from './pages/cold-mailer/BundleCheckoutPage';
 import MyBundlesPage from './pages/cold-mailer/MyBundlesPage';
 import { WalletProvider } from './context/WalletContext';
 import { PaywallProvider } from './context/PaywallContext';
+import { WelcomeCreditsProvider } from './context/WelcomeCreditsContext';
 import WorkflowsListPage from './pages/automations/WorkflowsListPage';
 import WorkflowBuilderPage from './pages/automations/WorkflowBuilderPage';
 import ComingSoonPage from './pages/automations/ComingSoonPage';
@@ -59,9 +60,10 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter>
         <WalletProvider>
-          <PaywallProvider>
-          <Routes>
-          {/* Public Marketing Route */}
+          <WelcomeCreditsProvider>
+            <PaywallProvider>
+            <Routes>
+            {/* Public Marketing Route */}
           <Route path="/" element={<PublicLayout />}>
             <Route index element={<LandingPage />} />
             <Route path="pricing" element={<PricingPage />} />
@@ -145,8 +147,9 @@ function App() {
           )}
         </Route>
         </Routes>
-          </PaywallProvider>
-      </WalletProvider>
+            </PaywallProvider>
+          </WelcomeCreditsProvider>
+        </WalletProvider>
       </BrowserRouter>
     </GoogleOAuthProvider>
   );

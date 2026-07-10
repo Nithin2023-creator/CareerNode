@@ -3,8 +3,9 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import MobileNavDrawer from './MobileNavDrawer';
+import WelcomeCreditsModal from '../onboarding/WelcomeCreditsModal';
 import { AnimatePresence, motion } from 'framer-motion';
-import { initLenisScroll } from '../../lib/lenisScroll';
+import { initLenisScroll, scrollToTop } from '../../lib/lenisScroll';
 
 export default function AppLayout() {
   const location = useLocation();
@@ -32,6 +33,8 @@ export default function AppLayout() {
       </div>
 
       <MobileNavDrawer isOpen={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
+      
+      <WelcomeCreditsModal />
 
       {/* Sidebar is fixed on the left inside a sticky container */}
       <div className="sticky top-8 h-[calc(100vh-4rem)] z-20 hidden lg:block">
@@ -41,7 +44,7 @@ export default function AppLayout() {
       {/* Main Content Area - The Inner Frame */}
       <main className="flex-1 min-w-0 overflow-x-hidden bg-white rounded-[32px] lg:rounded-[48px] ml-0 lg:ml-6 relative shadow-[var(--shadow-soft)] min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-4rem)] overflow-y-visible">
         <div className="mx-auto w-full h-full min-w-0">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" onExitComplete={scrollToTop}>
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 20 }}

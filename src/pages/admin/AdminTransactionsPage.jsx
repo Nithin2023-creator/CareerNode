@@ -104,8 +104,8 @@ export default function AdminTransactionsPage() {
                     <td className="px-6 py-4">{new Date(tx.date).toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm">{tx.userId?.email || tx.userId?.name || '—'}</td>
                     <td className="px-6 py-4 font-bold">{tx.description}</td>
-                    <td className={`px-6 py-4 text-right font-bold ${tx.type === 'purchase' ? 'text-green-600' : 'text-red-600'}`}>
-                      {tx.type === 'purchase' ? '+' : '-'}{tx.credits}
+                    <td className={`px-6 py-4 text-right font-bold ${tx.type === 'grant' ? 'text-blue-600' : tx.type === 'purchase' ? 'text-green-600' : 'text-red-600'}`}>
+                      {tx.type === 'purchase' || tx.type === 'grant' ? '+' : '-'}{tx.credits}
                     </td>
                   </tr>
                 ))

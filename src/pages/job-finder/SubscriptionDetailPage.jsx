@@ -18,6 +18,7 @@ export default function SubscriptionDetailPage() {
   const [jobs, setJobs] = useState([]);
   const [filterOptions, setFilterOptions] = useState({ locations: [], experienceLevels: [] });
   const [filters, setFilters] = useState({ location: ANY_VALUE, experienceLevel: ANY_VALUE });
+  const [appliedFilters, setAppliedFilters] = useState({ location: ANY_VALUE, experienceLevel: ANY_VALUE });
   const [loading, setLoading] = useState(true);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('new'); // new, all, saved
@@ -37,6 +38,10 @@ export default function SubscriptionDetailPage() {
           location: sub.matchFilters?.location || ANY_VALUE,
           experienceLevel: sub.matchFilters?.experienceLevel || ANY_VALUE,
         });
+        setAppliedFilters({
+          location: sub.matchFilters?.location || ANY_VALUE,
+          experienceLevel: sub.matchFilters?.experienceLevel || ANY_VALUE,
+        });
       } catch {
         toast.error('Failed to load subscription details');
       } finally {
@@ -46,11 +51,11 @@ export default function SubscriptionDetailPage() {
     fetchDetail();
   }, [id, toast]);
 
-  const fetchJobs = async (activeFilters) => {
+  const fetchJobs = async () => {
     setJobsLoading(true);
     try {
       const subJobs = await withMockFallback(
-        jobFinderApi.getSubscriptionJobs(id, activeFilters),
+        jobFinderApi.getSubscriptionJobs(id, {}),
         mockJobs.filter(j => j.subscriptionId === id)
       );
       setJobs(subJobs || []);
@@ -64,14 +69,19 @@ export default function SubscriptionDetailPage() {
   // Fetch the initial (persisted-filter) job list once subscription details are loaded.
   useEffect(() => {
     if (!loading && subscription) {
-      fetchJobs(filters);
+      fetchJobs();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, subscription]);
 
   const handleApplyFilters = async () => {
-    await withMockFallback(jobFinderApi.updateMatchFilters(id, filters), { success: true });
-    fetchJobs(filters);
+    try {
+      await withMockFallback(jobFinderApi.updateMatchFilters(id, filters), { success: true });
+      setAppliedFilters(filters);
+      toast.success('Match filters updated');
+    } catch {
+      toast.error('Failed to update filters');
+    }
   };
 
   const handleToggleBookmark = async (jobId) => {
@@ -106,8 +116,14 @@ export default function SubscriptionDetailPage() {
   }
 
   const filteredJobs = jobs.filter(j => {
+    const locMatch = !appliedFilters.location || appliedFilters.location === ANY_VALUE || j.location === appliedFilters.location;
+    const expMatch = !appliedFilters.experienceLevel || appliedFilters.experienceLevel === ANY_VALUE || j.experienceLevel === appliedFilters.experienceLevel;
+    const isMatch = locMatch && expMatch;
+
     if (activeTab === 'saved') return j.isBookmarked;
-    if (activeTab === 'new') return j.isNew;
+    if (activeTab === 'new') return isMatch && j.isNew;
+    if (activeTab === 'all') return isMatch;
+    if (activeTab === 'all_company') return true;
     return true;
   });
 
@@ -218,19 +234,27 @@ export default function SubscriptionDetailPage() {
           {/* Job Feed */}
           <div className="bento-card bg-white border border-black/5 overflow-hidden">
             <div className="border-b border-black/10 flex overflow-x-auto hide-scrollbar bg-black/[0.02]">
-              {['new', 'all', 'saved'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-5 text-sm font-bold uppercase tracking-widest transition-colors relative whitespace-nowrap
-                    ${activeTab === tab ? 'text-black' : 'text-black/40 hover:text-black/70'}`}
-                >
-                  {tab === 'new' ? 'New Matches' : tab === 'all' ? 'All Found' : 'Saved'}
-                  {activeTab === tab && (
-                    <div className="absolute bottom-0 left-0 w-full h-1 bg-black" />
-                  )}
-                </button>
-              ))}
+              {['new', 'all', 'all_company', 'saved'].map(tab => {
+                let label = '';
+                if (tab === 'new') label = 'New Matches';
+                else if (tab === 'all') label = 'Matched Roles';
+                else if (tab === 'all_company') label = 'All Company Roles';
+                else if (tab === 'saved') label = 'Saved';
+                
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-6 py-5 text-sm font-bold uppercase tracking-widest transition-colors relative whitespace-nowrap
+                      ${activeTab === tab ? 'text-black' : 'text-black/40 hover:text-black/70'}`}
+                  >
+                    {label}
+                    {activeTab === tab && (
+                      <div className="absolute bottom-0 left-0 w-full h-1 bg-black" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="p-6 md:p-8 space-y-4">

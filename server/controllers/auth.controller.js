@@ -2,9 +2,7 @@ const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const Wallet = require('../models/Wallet');
-const MembershipPlan = require('../models/MembershipPlan');
-const UserMembership = require('../models/UserMembership');
+const userBootstrapService = require('../services/userBootstrapService');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -37,6 +35,9 @@ exports.googleLogin = async (req, res, next) => {
 
     // Find or create user
     let user = await User.findOne({ googleId });
+    let isNewUser = false;
+    let welcomeCredits = 0;
+
     if (!user) {
       // Check if user exists by email but without googleId
       user = await User.findOne({ email });
@@ -47,30 +48,16 @@ exports.googleLogin = async (req, res, next) => {
         await user.save();
       } else {
         user = await User.create({ googleId, email, name, picture });
-        // Initialize wallet for new user (100 credits for free)
-        await Wallet.create({
-          userId: user._id,
-          balance: 100,
-        });
-        
-        // Grant free membership
-        const freePlan = await MembershipPlan.findOne({ tier: 'free' });
-        if (freePlan) {
-          const nextYear = new Date();
-          nextYear.setFullYear(nextYear.getFullYear() + 10);
-          await UserMembership.create({
-            userId: user._id,
-            planId: freePlan._id,
-            status: 'active',
-            renewsAt: nextYear,
-          });
-        }
+        // Bootstrap new user wallet and membership
+        const bootstrapResult = await userBootstrapService.bootstrapNewUser(user._id);
+        isNewUser = true;
+        welcomeCredits = bootstrapResult.welcomeCredits;
       }
     }
 
     const authToken = signToken(user);
 
-    res.status(200).json({
+    const responsePayload = {
       token: authToken,
       user: {
         id: user._id,
@@ -79,7 +66,14 @@ exports.googleLogin = async (req, res, next) => {
         picture: user.picture,
         isAdmin: user.isAdmin
       }
-    });
+    };
+
+    if (isNewUser) {
+      responsePayload.isNewUser = true;
+      responsePayload.welcomeCredits = welcomeCredits;
+    }
+
+    res.status(200).json(responsePayload);
 
   } catch (error) {
     console.error('Google login error:', error);
@@ -108,24 +102,8 @@ exports.signup = async (req, res, next) => {
       passwordHash
     });
 
-    // Initialize wallet
-    await Wallet.create({
-      userId: user._id,
-      balance: 100,
-    });
-    
-    // Grant free membership
-    const freePlan = await MembershipPlan.findOne({ tier: 'free' });
-    if (freePlan) {
-      const nextYear = new Date();
-      nextYear.setFullYear(nextYear.getFullYear() + 10);
-      await UserMembership.create({
-        userId: user._id,
-        planId: freePlan._id,
-        status: 'active',
-        renewsAt: nextYear,
-      });
-    }
+    // Bootstrap new user wallet and membership
+    const bootstrapResult = await userBootstrapService.bootstrapNewUser(user._id);
 
     const authToken = signToken(user);
 
@@ -137,7 +115,9 @@ exports.signup = async (req, res, next) => {
         name: user.name,
         picture: user.picture,
         isAdmin: user.isAdmin
-      }
+      },
+      isNewUser: true,
+      welcomeCredits: bootstrapResult.welcomeCredits
     });
   } catch (error) {
     console.error('Signup error:', error);

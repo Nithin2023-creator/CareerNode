@@ -66,7 +66,7 @@ export default function WalletPage() {
         {wallet.transactions.length === 0 ? (
           <div className="text-center py-12 text-black/40">
             <p className="font-bold uppercase tracking-widest text-sm mb-2">No transactions yet</p>
-            <p className="text-xs">Your credit purchases and expenditures will appear here.</p>
+            <p className="text-xs">Your credit grants and expenditures will appear here.</p>
           </div>
         ) : (
           <>
@@ -76,9 +76,9 @@ export default function WalletPage() {
                 <div key={tx.id} className="rounded-[16px] border border-black/10 p-4 bg-black/[0.02]">
                   <div className="flex justify-between items-start gap-3 mb-2">
                     <p className="text-sm font-bold">{tx.description}</p>
-                    <div className={`inline-flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-md shrink-0 ${tx.type === 'purchase' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                      {tx.type === 'purchase' ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
-                      {tx.type === 'purchase' ? '+' : ''}{tx.credits}
+                    <div className={`inline-flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-md shrink-0 ${tx.type === 'grant' ? 'text-blue-600 bg-blue-50' : tx.type === 'purchase' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                      {tx.type === 'purchase' || tx.type === 'grant' ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                      {tx.type === 'purchase' || tx.type === 'grant' ? '+' : ''}{tx.credits}
                     </div>
                   </div>
                   <div className="flex justify-between text-xs font-medium text-black/50">
@@ -106,9 +106,9 @@ export default function WalletPage() {
                     <td className="py-4 text-sm font-medium whitespace-nowrap">{formatDate(tx.date)}</td>
                     <td className="py-4 text-sm font-bold">{tx.description}</td>
                     <td className="py-4 text-right">
-                      <div className={`inline-flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-md ${tx.type === 'purchase' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                        {tx.type === 'purchase' ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
-                        {tx.type === 'purchase' ? '+' : ''}{tx.credits}
+                      <div className={`inline-flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-md ${tx.type === 'grant' ? 'text-blue-600 bg-blue-50' : tx.type === 'purchase' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                        {tx.type === 'purchase' || tx.type === 'grant' ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                        {tx.type === 'purchase' || tx.type === 'grant' ? '+' : ''}{tx.credits}
                       </div>
                     </td>
                     <td className="py-4 text-sm font-bold text-black/50 text-right">{tx.balanceAfter}</td>

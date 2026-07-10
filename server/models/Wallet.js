@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const transactionSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['purchase', 'spend'],
+    enum: ['purchase', 'spend', 'grant'],
     required: true,
   },
   description: {
@@ -20,7 +20,7 @@ const transactionSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    enum: ['job-finder', 'cold-mailer', 'membership', 'resume-maker'],
+    enum: ['job-finder', 'cold-mailer', 'membership', 'resume-maker', 'signup', 'cashfree', 'admin', 'system'],
     required: true,
   },
   date: {
